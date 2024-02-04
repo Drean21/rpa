@@ -37,5 +37,4 @@ build/
 
 
 ### Specific directories ###
-/template/chrome-win64/
-/template/drivers/
+/template/browser/
