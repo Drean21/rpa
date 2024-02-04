@@ -34,3 +34,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+
+### Specific directories ###
+/template/chrome-win64/
+/template/drivers/
