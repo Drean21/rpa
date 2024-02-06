@@ -17,6 +17,8 @@ import java.nio.file.Paths;
 public class RPAConfig implements Serializable {
     public static final String envPath=getEnvPath();
 
+    public static  final String cachePath = envPath + File.separator + "cache";
+
 
     /**
      * 获取运行环境路径
