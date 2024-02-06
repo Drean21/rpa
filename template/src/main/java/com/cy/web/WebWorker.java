@@ -8,6 +8,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
@@ -104,9 +105,8 @@ public class WebWorker {
         try {
             // 定位要截图的元素，可以使用元素的XPath、CSS选择器等方法
             WebElement element = getWebElement(by);
-
             // 截取指定元素的截图
-            File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File screenshot = ((TakesScreenshot) element).getScreenshotAs(OutputType.FILE);
             //FileUtils.copyFile(screenshot, new File("ele  ment_screenshot.png"));
             FileUtil.copyFile(screenshot, new File(path));
         } catch (Exception e) {
@@ -116,12 +116,13 @@ public class WebWorker {
     }
 
 
+
     /**
      * 点击元素
      * @param by
      */
     public void clickElement(By by){
-        //driver.findElement(by).click();
+        //getWebElement(by).click();
         action.click(getWebElement(by)).perform();
     }
 
@@ -138,16 +139,7 @@ public class WebWorker {
             throw new RuntimeException(e);
         }
     }
-
-    /**
-     * 获取网页元素对象
-     * @param  by  the locating mechanism
-     * @return     the web element identified by the given By object
-     */
-    private WebElement getWebElement(By by) {
-        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-        return element;
-    }
+    
 
     /**
      * 创建新的浏览器对象
@@ -157,5 +149,40 @@ public class WebWorker {
         WebWorker webWorker = new WebWorker();
         webWorker.initChrome();
         return webWorker;
+    }
+
+
+    /**
+     * 选择下拉菜单中的选项 
+     */
+    public void selectOptionInDropdown(By by, String optionText) {
+        WebElement element = getWebElement(by);
+        if (isSelectElement(element)) {
+            Select dropdown = new Select(element);
+            dropdown.selectByVisibleText(optionText);
+        } else {
+            throw new IllegalArgumentException("元素不是下拉菜单类型");
+        }
+    }
+
+
+    /**
+     * 判断元素是否是下拉菜单类型
+     * @param element
+     * @return
+     */
+    private boolean isSelectElement(WebElement element) {
+        return element.getTagName().equalsIgnoreCase("select");
+    }
+
+
+    /**
+     * 获取网页元素对象
+     * @param  by  the locating mechanism
+     * @return     the web element identified by the given By object
+     */
+    private WebElement getWebElement(By by) {
+        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+        return element;
     }
 }
