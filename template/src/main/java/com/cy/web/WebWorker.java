@@ -2,7 +2,9 @@ package com.cy.web;
 
 import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -21,6 +23,7 @@ import java.time.Duration;
  * @version 2024/02/01 19:07
  **/
 @Data
+@Slf4j
 public class WebWorker {
 
     /*浏览器驱动*/
@@ -36,11 +39,11 @@ public class WebWorker {
 
 
     /**
-     *初始化内置的谷歌浏览器
+     *初始化谷歌浏览器
      */
     public void initChrome() {
         try {
-            // 设置 ChromeDriver 路径
+             //设置 ChromeDriver 路径
             String chromeDriverPath = RPAConfig.envPath + File.separator + "browser/drivers/chromedriver.exe";
             System.setProperty("webdriver.chrome.driver", chromeDriverPath);
 
@@ -62,7 +65,18 @@ public class WebWorker {
         } catch (Exception e) {
             // 处理异常
             e.printStackTrace();
-            // 可添加其他处理逻辑，如日志记录、报警等
+            log.warn("路径下内置的谷歌浏览器驱动不存在！正在尝试使用WebDriverManager获取驱动...");
+            WebDriverManager.chromedriver().setup();
+            ChromeOptions options = new ChromeOptions();
+            // 添加其他 ChromeOptions 设置（可根据需要自行添加）
+            options.addArguments("--start-maximized"); // 最大化窗口
+            // options.addArguments("--headless"); // 无头模式
+            options.addArguments("--remote-allow-origins=*");//解决 403 出错问题
+            // 创建 ChromeDriver 实例
+            driver = new ChromeDriver(options);
+            action = new Actions(driver);
+            js = (JavascriptExecutor) driver;
+            wait= new WebDriverWait(driver,  Duration.ofSeconds(10));
         }
     }
 

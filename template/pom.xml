@@ -46,6 +46,19 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <version>5.6.3</version>
+            <!--<scope>test</scope>-->
+        </dependency>
+        <!--注意是httpclient5兼容webdrivermanager，以及版本号-->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.2.1</version>
+            <!--<scope>test</scope>-->
+        </dependency>
     </dependencies>
 
 </project>
