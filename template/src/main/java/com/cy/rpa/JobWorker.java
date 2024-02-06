@@ -28,5 +28,5 @@ public abstract class JobWorker<T> {
      *
      * @param param
      */
-    public abstract void worker(JSONObject param, String dataUrl);
+    public abstract void worker(JSONObject param, String dataUrl) throws Exception;
 }
