@@ -1,15 +1,17 @@
 package com.cy.web;
 
+import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
 import lombok.Data;
-import org.junit.Test;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.time.Duration;
 
 /**
  * WebWorker 网页自动化根类
@@ -28,7 +30,13 @@ public class WebWorker {
     /*Action类 链式网页操作*/
     private Actions action;
 
+    /* 等待器 */
+    WebDriverWait wait;
 
+
+    /**
+     *初始化内置的谷歌浏览器
+     */
     public void initChrome() {
         try {
             // 设置 ChromeDriver 路径
@@ -47,12 +55,9 @@ public class WebWorker {
 
             // 创建 ChromeDriver 实例
             driver = new ChromeDriver(options);
-
-            // 可选：设置隐式等待时间
-            // driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-
-            // 可选：最大化窗口
-            // driver.manage().window().maximize();
+            action = new Actions(driver);
+            js = (JavascriptExecutor) driver;
+            wait= new WebDriverWait(driver,  Duration.ofSeconds(10));
         } catch (Exception e) {
             // 处理异常
             e.printStackTrace();
@@ -60,7 +65,9 @@ public class WebWorker {
         }
     }
 
-    // 可以在测试结束时调用该方法来关闭浏览器
+    /**
+     * 关闭浏览器
+     */
     public void closeBrowser() {
         if (driver != null) {
             driver.quit();
@@ -75,16 +82,80 @@ public class WebWorker {
     // todo 滑块
 
 
+    /**
+     * 打开网页
+     * @param url
+     */
     public void openUrl(String url){
+        if (driver == null) {
+            initChrome();
+        }
         driver.get(url);
     }
 
-    @Test
-    public void test2() {
-        // 设置 Chrome 浏览器驱动的路径
-        System.setProperty("webdriver.chrome.driver", RPAConfig.envPath+ File.separator+ "drivers/chromedriver.exe");
-        driver = new ChromeDriver();
-        //js = (JavascriptExecutor) driver;
-        //action = new Actions(driver);
+
+    /**
+     * 网页元素截屏
+     * @param  by  the locating mechanism for the web element
+     * @return     the file path of the captured screenshot
+     */
+    public String captureElementScreenshot(By by) {
+        String path = RPAConfig.cachePath + File.separator + System.currentTimeMillis() + ".png";
+        try {
+            // 定位要截图的元素，可以使用元素的XPath、CSS选择器等方法
+            WebElement element = getWebElement(by);
+
+            // 截取指定元素的截图
+            File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            //FileUtils.copyFile(screenshot, new File("ele  ment_screenshot.png"));
+            FileUtil.copyFile(screenshot, new File(path));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return path;
+    }
+
+
+    /**
+     * 点击元素
+     * @param by
+     */
+    public void clickElement(By by){
+        //driver.findElement(by).click();
+        action.click(getWebElement(by)).perform();
+    }
+
+    /**
+     * 设置输入框元素的值
+     * @param by
+     * @param value
+     */
+    public void setInputValue(By by, String value){
+        WebElement element = getWebElement(by);
+        try {
+            action.sendKeys(element,value).perform();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 获取网页元素对象
+     * @param  by  the locating mechanism
+     * @return     the web element identified by the given By object
+     */
+    private WebElement getWebElement(By by) {
+        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+        return element;
+    }
+
+    /**
+     * 创建新的浏览器对象
+     * @return the WebDriver instance created
+     */
+    public WebWorker newChrome(){
+        WebWorker webWorker = new WebWorker();
+        webWorker.initChrome();
+        return webWorker;
     }
 }
