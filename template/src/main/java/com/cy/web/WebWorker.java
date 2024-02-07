@@ -6,9 +6,12 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
@@ -583,6 +586,11 @@ public class WebWorker {
         return false;
     }
 
+    /**
+     *  检查页面是否包含指定的元素
+     * @param seletor
+     * @return
+     */
     private boolean checkElement(By seletor) {
         try {
             sleep(200);
@@ -596,4 +604,39 @@ public class WebWorker {
     }
 
 
+    /**
+     *  鼠标移动到指定元素（可实现悬停效果）
+     * @param seletor
+     */
+    public void moveMouseToElement(By seletor) {
+        WebElement element = getElement(seletor);
+        actions.moveToElement(element).perform();
+    }
+
+
+    // todo 麻烦，暂时搁置（连接已经打开的浏览器实例）
+    @Test
+    public void TestConnectRunningBrowser() {
+        // 设置WebDriverManager来自动管理EdgeDriver
+        WebDriverManager.edgedriver().setup();
+
+        // 创建EdgeOptions实例并设置远程调试地址
+        EdgeOptions options = new EdgeOptions();
+        options.setExperimentalOption("debuggerAddress", "localhost:9222"); // 确保这个端口与你的Edge实例匹配
+
+        // 使用配置的选项实例化EdgeDriver
+        WebDriver driver = new EdgeDriver(options);
+
+        // 现在，driver连接到了已经运行的Edge实例
+        System.out.println("已连接到浏览器，当前页面标题是: " + driver.getTitle());
+
+        // 记得在适当的时候关闭驱动
+        // driver.quit();
+
+
+        //ChromeOptions options = new ChromeOptions();
+        //options.setExperimentalOption("debuggerAddress", "localhost:9222");
+        //WebDriverManager.chromedriver().setup();
+        //WebDriver driver = new ChromeDriver(options);
+    }
 }
