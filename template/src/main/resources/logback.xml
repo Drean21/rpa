@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} -- %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="io.github.bonigarcia" level="INFO"/> <!-- 设置 io.github.bonigarcia 包下的日志级别为 INFO -->
+    <!-- 可以设置其他包或类的日志级别，或者设置为 OFF 来完全禁用日志输出 -->
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
