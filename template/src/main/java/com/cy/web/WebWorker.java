@@ -2,6 +2,7 @@ package com.cy.web;
 
 import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
+import com.cy.web.listeners.CustomEventListener;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.events.EventFiringWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -34,7 +36,7 @@ import java.util.Set;
 public class WebWorker {
 
     /*浏览器驱动*/
-    private WebDriver driver;
+    private EventFiringWebDriver driver;
     /*js执行器*/
     private JavascriptExecutor js;
 
@@ -63,7 +65,10 @@ public class WebWorker {
             options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
 
             // 创建 ChromeDriver 实例
-            driver = new ChromeDriver(options);
+            WebDriver originalDriver = new ChromeDriver();
+            driver = new EventFiringWebDriver(originalDriver);
+            // 注册自定义监听器
+            driver.register(new CustomEventListener());
             actions = new Actions(driver);
             js = (JavascriptExecutor) driver;
         } catch (Exception e) {
@@ -80,7 +85,10 @@ public class WebWorker {
             options.addArguments("--remote-allow-origins=*"); // 解决 403 出错问题,允许远程连接
             options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
             // 创建 ChromeDriver 实例
-            driver = new ChromeDriver(options);
+            WebDriver originalDriver = new ChromeDriver();
+            driver = new EventFiringWebDriver(originalDriver);
+            // 注册自定义监听器
+            driver.register(new CustomEventListener());
             actions = new Actions(driver);
             js = (JavascriptExecutor) driver;
         }
@@ -675,11 +683,5 @@ public class WebWorker {
 
         // 记得在适当的时候关闭驱动
         // driver.quit();
-
-
-        //ChromeOptions options = new ChromeOptions();
-        //options.setExperimentalOption("debuggerAddress", "localhost:9222");
-        //WebDriverManager.chromedriver().setup();
-        //WebDriver driver = new ChromeDriver(options);
     }
 }
