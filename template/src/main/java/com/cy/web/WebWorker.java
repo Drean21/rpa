@@ -5,6 +5,7 @@ import com.cy.rpa.RPAConfig;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -15,7 +16,11 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+
+import static cn.hutool.core.thread.ThreadUtil.sleep;
 
 /**
  * WebWorker 网页自动化根类
@@ -100,6 +105,21 @@ public class WebWorker {
         if (driver == null) {
             initChrome();
         }
+        driver.get(url);
+    }
+
+    /**
+     * 在新标签页中打开网页
+     *
+     * @param url 要打开的网页URL
+     */
+    public void openUrlInNewTab(String url) {
+        if (driver == null) {
+            initChrome();
+        }
+        // 打开一个新标签页并切换到该标签页
+        newTab();
+        // 在新标签页中打开网页
         driver.get(url);
     }
 
@@ -200,6 +220,7 @@ public class WebWorker {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
         return element;
     }
+
     /**
      * 获取多个网页元素对象列表(默认等待10s)
      *
@@ -224,13 +245,14 @@ public class WebWorker {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
         return element;
     }
+
     /**
      * 获取多个网页元素对象列表(指定等待时长)
      *
      * @param by the locating mechanism
      * @return the list of web elements identified by the given By object
      */
-    private List<WebElement> getElements(By by,int time) {
+    private List<WebElement> getElements(By by, int time) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(time));
         List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
         return elements;
@@ -247,7 +269,7 @@ public class WebWorker {
             driver.switchTo().frame(FrameFlag);
             return true;
         } catch (Exception e) {
-            log.error("iframe切换失败,原因：%s",e.getMessage());
+            log.error("iframe切换失败,原因：%s", e.getMessage());
             return false;
         }
     }
@@ -263,7 +285,7 @@ public class WebWorker {
             driver.switchTo().frame(FrameIndex);
             return true;
         } catch (Exception e) {
-            log.error("iframe切换失败,原因：%s",e.getMessage());
+            log.error("iframe切换失败,原因：%s", e.getMessage());
             return false;
         }
     }
@@ -279,7 +301,7 @@ public class WebWorker {
             driver.switchTo().frame(FrameElement);
             return true;
         } catch (Exception e) {
-            log.error("iframe切换失败,原因：%s",e.getMessage());
+            log.error("iframe切换失败,原因：%s", e.getMessage());
             return false;
         }
     }
@@ -294,7 +316,7 @@ public class WebWorker {
             driver.switchTo().parentFrame();
             return true;
         } catch (Exception e) {
-            log.error("iframe切换失败,原因：%s",e.getMessage());
+            log.error("iframe切换失败,原因：%s", e.getMessage());
             return false;
         }
     }
@@ -309,8 +331,258 @@ public class WebWorker {
             driver.switchTo().defaultContent();
             return true;
         } catch (Exception e) {
-            log.error("iframe切换失败,原因：%s",e.getMessage());
+            log.error("iframe切换失败,原因：%s", e.getMessage());
             return false;
         }
     }
+
+
+    /**
+     * 打开新的标签页
+     */
+    public void newTab() {
+        js.executeScript("window.open();");
+        switchToNewTab();
+    }
+
+    /**
+     * 关闭当前标签页
+     */
+    public void closeTab() {
+        js.executeScript("window.close();");
+    }
+
+    /**
+     * 关闭指定标签页
+     *
+     * @param tabName  要关闭的标签页名称
+     */
+    public boolean closeTabByTitle(String tabName) {
+        // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
+        String currentHandle = driver.getWindowHandle();
+        // 获取当前浏览器的所有窗口句柄
+        Set<String> handles = driver.getWindowHandles();
+        // 遍历窗口句柄
+        Iterator<String> it = handles.iterator();
+        while (it.hasNext()) {
+            String handle = it.next();
+            try {
+                driver.switchTo().window(handle); // 切换到窗口
+                String title = driver.getTitle(); // 获取窗口标题
+                // 如果标题与指定的标签页名称匹配，则执行关闭操作
+                if (title.equals(tabName)) {
+                    driver.close(); // 关闭标签页
+                    return true;
+                }
+            } catch (Exception e) {
+                log.error("寻找标签页出现异常：" + e.getMessage());
+            }
+        }
+        // 切换失败，恢复到原来的窗口
+        driver.switchTo().window(currentHandle);
+        log.info("未找到指定标题的标签页");
+        return false;
+    }
+
+    /**
+     * 关闭具有指定URL前缀的标签页
+     *
+     * @param urlPrefix 要关闭的标签页URL前缀
+     */
+    public boolean closeTabByUrlPrefix(String urlPrefix) {
+        // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
+        String currentHandle = driver.getWindowHandle();
+        // 获取当前浏览器的所有窗口句柄
+        Set<String> handles = driver.getWindowHandles();
+        // 遍历窗口句柄
+        Iterator<String> it = handles.iterator();
+        while (it.hasNext()) {
+            String handle = it.next();
+            try {
+                driver.switchTo().window(handle); // 切换到窗口
+                String currentUrl = driver.getCurrentUrl(); // 获取当前窗口的URL
+                // 如果当前URL以指定前缀开头，则执行关闭操作
+                if (currentUrl.startsWith(urlPrefix)) {
+                    driver.close(); // 关闭标签页
+                    return true;
+                }
+            } catch (Exception e) {
+                log.error("寻找标签页出现异常：" + e.getMessage());
+            }
+        }
+        // 切换失败，恢复到原来的窗口
+        driver.switchTo().window(currentHandle);
+        log.info("未找到具有指定URL前缀的标签页");
+        return false;
+    }
+
+    /**
+     * 关闭除当前标签页以外的所有标签页
+     */
+    public void closeAllTabsExceptCurrent() {
+        // 获取当前窗口句柄
+        String currentHandle = driver.getWindowHandle();
+        try {
+            // 获取所有窗口句柄
+            Set<String> handles = driver.getWindowHandles();
+            // 遍历窗口句柄
+            for (String handle : handles) {
+                // 如果不是当前窗口句柄，则关闭该窗口
+                if (!handle.equals(currentHandle)) {
+                    driver.switchTo().window(handle); // 切换到该窗口
+                    driver.close(); // 关闭窗口
+                }
+            }
+            // 切换回当前窗口句柄
+            driver.switchTo().window(currentHandle);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 切换到新打开的标签页
+     */
+    private void switchToNewTab() {
+        // 获取所有窗口的句柄
+        for (String handle : driver.getWindowHandles()) {
+            // 切换到新标签页的句柄
+            driver.switchTo().window(handle);
+        }
+    }
+    /**
+     * 切换到指定标题的标签页
+     * @param tabTitle 标签页标题
+     */
+    public Boolean switchTabByTitle(String tabTitle) {
+        //js.executeScript("window.switch('" + tabName + "');");
+        if (StringUtils.isEmpty(tabTitle)) {
+            return false;
+        }
+        if (getCurrentPageTitle().contains(tabTitle)) {
+            return true;
+        }
+        //获取当前浏览器的所有窗口句柄
+        Set<String> handles = driver.getWindowHandles();
+        // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
+        String currentHandle = driver.getWindowHandle();
+        Iterator<String> it = handles.iterator();
+        while (it.hasNext()) {
+            String next = it.next();
+            try {
+                driver.switchTo().window(next);//切换到新窗口
+                //initBrowserZoom();
+                if (getCurrentPageTitle().contains(tabTitle)) {
+                    log.info("切换到标签页(title):"+driver.getTitle());
+                    return true;
+                }
+            } catch (Exception e) {
+                log.info("寻找标签页出现异常:" + e.getMessage());
+            }
+        }
+        // 切换失败，恢复到原来的窗口
+        driver.switchTo().window(currentHandle);
+        log.info("未找到指定标题的标签页");
+        return false;
+    }
+
+    /**
+     * 获取当前页的标题
+     *
+     * @return
+     */
+    public String getCurrentPageTitle() {
+        String title = driver.getTitle();
+        return StringUtils.isNotBlank(title) ? title : "null";
+    }
+
+    /**
+     * 获取当前页URL
+     *
+     * @return
+     */
+    public String getCurrentPageUrl() {
+        String url = driver.getCurrentUrl();
+        return StringUtils.isNotBlank(url) ? url : "null";
+    }
+
+    /**
+     * 切换到具备特定元素的窗体
+     *
+     * @param by
+     */
+    public boolean switchTabByElement(By by) {
+        // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
+        String currentHandle = driver.getWindowHandle();
+        try {
+            if (getElement(by, 2) != null) {
+                return true;
+            }
+            //获取当前浏览器的所有窗口句柄
+            Set<String> handles = driver.getWindowHandles();//获取所有窗口句柄
+            Iterator<String> it = handles.iterator();
+            while (it.hasNext()) {
+                String next = it.next();
+                try {
+                    driver.switchTo().window(next);//切换到新窗口
+                    //initBrowserZoom();
+                    if (checkElement(by)) {
+                        return true;
+                    }
+                } catch (Exception e) {
+                    log.error("寻找标签页出现异常：" + next);
+                }
+            }
+        } catch (Exception e) {
+            log.error("窗体切换失败!!!!");
+            return false;
+        }
+        // 切换失败，恢复到原来的窗口
+        driver.switchTo().window(currentHandle);
+        log.info("未找到具有指定URL前缀的标签页");
+        return false;
+    }
+    /**
+     * 切换到具有指定URL前缀的标签页
+     *
+     * @param urlPrefix URL前缀
+     * @return 如果成功切换到具有指定URL前缀的标签页，则返回true；否则返回false
+     */
+    public boolean switchTabByUrlPrefix(String urlPrefix) {
+        // 获取当前浏览器的所有窗口句柄
+        Set<String> handles = driver.getWindowHandles();
+        // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
+        String currentHandle = driver.getWindowHandle();
+        // 遍历窗口句柄
+        for (String handle : handles) {
+            try {
+                driver.switchTo().window(handle); // 切换到窗口
+                String currentUrl = driver.getCurrentUrl(); // 获取当前窗口的URL
+                // 如果当前URL以指定前缀开头，则返回true
+                if (currentUrl.startsWith(urlPrefix)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                log.error("寻找标签页出现异常：" + e.getMessage());
+            }
+        }
+        // 切换失败，恢复到原来的窗口
+        driver.switchTo().window(currentHandle);
+        log.info("未找到具有指定URL前缀的标签页");
+        return false;
+    }
+
+    private boolean checkElement(By seletor) {
+        try {
+            sleep(200);
+            driver.findElement(seletor);
+            log.info("checkElement -> true:" + seletor.toString());
+            return true;
+        } catch (Exception e) {
+            log.info("checkElement -> false:" + seletor.toString());
+            return false;
+        }
+    }
+
+
 }
