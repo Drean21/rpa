@@ -29,4 +29,18 @@ public abstract class JobWorker<T> {
      * @param param
      */
     public abstract void worker(JSONObject param, String dataUrl) throws Exception;
+
+    /**
+     * Delays the execution of the current thread for the specified
+     * time in milliseconds.
+     *
+     * @param  time  the length of time to sleep in milliseconds
+     */
+    public void sleep(long time){
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }
