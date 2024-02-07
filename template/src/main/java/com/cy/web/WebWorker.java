@@ -37,8 +37,8 @@ public class WebWorker {
     /*js执行器*/
     private JavascriptExecutor js;
 
-    /*Action类 链式网页操作*/
-    private Actions action;
+    /*actions类 链式网页操作*/
+    private Actions actions;
 
     /**
      * 初始化谷歌浏览器
@@ -61,7 +61,7 @@ public class WebWorker {
 
             // 创建 ChromeDriver 实例
             driver = new ChromeDriver(options);
-            action = new Actions(driver);
+            actions = new Actions(driver);
             js = (JavascriptExecutor) driver;
         } catch (Exception e) {
             // 处理异常
@@ -75,7 +75,7 @@ public class WebWorker {
             options.addArguments("--remote-allow-origins=*");//解决 403 出错问题
             // 创建 ChromeDriver 实例
             driver = new ChromeDriver(options);
-            action = new Actions(driver);
+            actions = new Actions(driver);
             js = (JavascriptExecutor) driver;
         }
     }
@@ -153,7 +153,18 @@ public class WebWorker {
      */
     public void clickElement(By by) {
         //getElement(by).click();
-        action.click(getElement(by)).perform();
+        actions.moveToElement(getElement(by)).click().perform();
+    }
+
+    /**
+     * 等待一定时间后点击指定元素
+     *
+     * @param by         用于定位元素的By对象
+     * @param waitTimeInSeconds 等待时间（秒）
+     */
+    public void clickElement(By by, int waitTimeInSeconds) {
+        WebElement element = getElement(by, waitTimeInSeconds);
+        actions.moveToElement(element).click().perform();
     }
 
     /**
@@ -165,7 +176,7 @@ public class WebWorker {
     public void setInputValue(By by, String value) {
         WebElement element = getElement(by);
         try {
-            action.sendKeys(element, value).perform();
+            actions.sendKeys(element, value).perform();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
