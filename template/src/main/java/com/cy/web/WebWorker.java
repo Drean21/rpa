@@ -23,8 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static cn.hutool.core.thread.ThreadUtil.sleep;
-
 /**
  * WebWorker 网页自动化根类
  *
@@ -56,11 +54,13 @@ public class WebWorker {
             String chromePath = RPAConfig.envPath + File.separator + "browser/chrome-win64/chrome.exe";
             ChromeOptions options = new ChromeOptions();
             options.setBinary(chromePath);
-
-            // 添加其他 ChromeOptions 设置（可根据需要自行添加）
+            // 添加其他 ChromeOptions 设置
             options.addArguments("--start-maximized"); // 最大化窗口
-            // options.addArguments("--headless"); // 无头模式
-            options.addArguments("--remote-allow-origins=*");//解决 403 出错问题
+            // options.addArguments("--headless"); // 无头模式，如果需要(更容易被检测)
+            options.addArguments("--disable-blink-features=AutomationControlled");//开发者模式可以减少一些网站对自动化脚本的检测。
+            //options.addArguments("--disable-gpu"); // 禁用GPU加速
+            options.addArguments("--remote-allow-origins=*"); // 解决 403 出错问题,允许远程连接
+            options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
 
             // 创建 ChromeDriver 实例
             driver = new ChromeDriver(options);
@@ -72,10 +72,13 @@ public class WebWorker {
             log.warn("路径下内置的谷歌浏览器驱动不存在！正在尝试使用WebDriverManager获取驱动...");
             WebDriverManager.chromedriver().setup();
             ChromeOptions options = new ChromeOptions();
-            // 添加其他 ChromeOptions 设置（可根据需要自行添加）
+            // 添加其他 ChromeOptions 设置
             options.addArguments("--start-maximized"); // 最大化窗口
-            // options.addArguments("--headless"); // 无头模式
-            options.addArguments("--remote-allow-origins=*");//解决 403 出错问题
+            // options.addArguments("--headless"); // 无头模式，如果需要(更容易被检测)
+            options.addArguments("--disable-blink-features=AutomationControlled");//开发者模式可以减少一些网站对自动化脚本的检测。
+            //options.addArguments("--disable-gpu"); // 禁用GPU加速
+            options.addArguments("--remote-allow-origins=*"); // 解决 403 出错问题,允许远程连接
+            options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
             // 创建 ChromeDriver 实例
             driver = new ChromeDriver(options);
             actions = new Actions(driver);
@@ -162,7 +165,7 @@ public class WebWorker {
     /**
      * 等待一定时间后点击指定元素
      *
-     * @param by         用于定位元素的By对象
+     * @param by                用于定位元素的By对象
      * @param waitTimeInSeconds 等待时间（秒）
      */
     public void clickElement(By by, int waitTimeInSeconds) {
@@ -254,8 +257,8 @@ public class WebWorker {
      * @param time the time to wait in seconds
      * @return the located WebElement
      */
-    private WebElement getElement(By by, int time) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(time));
+    private WebElement getElement(By by, long time) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
         return element;
     }
@@ -266,8 +269,8 @@ public class WebWorker {
      * @param by the locating mechanism
      * @return the list of web elements identified by the given By object
      */
-    private List<WebElement> getElements(By by, int time) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(time));
+    private List<WebElement> getElements(By by, long time) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
         List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
         return elements;
     }
@@ -369,7 +372,7 @@ public class WebWorker {
     /**
      * 关闭指定标签页
      *
-     * @param tabName  要关闭的标签页名称
+     * @param tabName 要关闭的标签页名称
      */
     public boolean closeTabByTitle(String tabName) {
         // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
@@ -464,8 +467,10 @@ public class WebWorker {
             driver.switchTo().window(handle);
         }
     }
+
     /**
      * 切换到指定标题的标签页
+     *
      * @param tabTitle 标签页标题
      */
     public Boolean switchTabByTitle(String tabTitle) {
@@ -487,7 +492,7 @@ public class WebWorker {
                 driver.switchTo().window(next);//切换到新窗口
                 //initBrowserZoom();
                 if (getCurrentPageTitle().contains(tabTitle)) {
-                    log.info("切换到标签页(title):"+driver.getTitle());
+                    log.info("切换到标签页(title):" + driver.getTitle());
                     return true;
                 }
             } catch (Exception e) {
@@ -556,6 +561,7 @@ public class WebWorker {
         log.info("未找到具有指定URL前缀的标签页");
         return false;
     }
+
     /**
      * 切换到具有指定URL前缀的标签页
      *
@@ -587,14 +593,14 @@ public class WebWorker {
     }
 
     /**
-     *  检查页面是否包含指定的元素
+     * 检查页面是否包含指定的元素
+     *
      * @param seletor
      * @return
      */
     private boolean checkElement(By seletor) {
         try {
-            sleep(200);
-            driver.findElement(seletor);
+            getElement(seletor, 200);
             log.info("checkElement -> true:" + seletor.toString());
             return true;
         } catch (Exception e) {
@@ -605,12 +611,49 @@ public class WebWorker {
 
 
     /**
-     *  鼠标移动到指定元素（可实现悬停效果）
+     * 鼠标移动到指定元素（可实现悬停效果）
+     *
      * @param seletor
      */
     public void moveMouseToElement(By seletor) {
         WebElement element = getElement(seletor);
         actions.moveToElement(element).perform();
+    }
+
+    /**
+     * 模拟鼠标长按指定元素
+     *
+     * @param by
+     * @param durationInMilliseconds
+     */
+    public void pressElement(By by, long durationInMilliseconds) {
+        WebElement element = getElement(by);
+        actions.clickAndHold(element).pause(durationInMilliseconds).release().perform();
+    }
+
+    /**
+     * 拖动滑块验证元素(简单的拖动滑块验证，部分简单滑块验证可用；提供思路仅供参考)
+     *
+     * @param sliderLocator   滑块元素的定位器
+     * @param dragAreaLocator 拖动区域元素的定位器
+     */
+    public void dragSlider(By sliderLocator, By dragAreaLocator) {
+        // 定位滑块和拖动区域
+        WebElement slider = driver.findElement(sliderLocator);
+        WebElement dragArea = driver.findElement(dragAreaLocator);
+
+        // 获取滑块和拖动区域的宽度
+        int sliderWidth = Integer.parseInt(slider.getCssValue("width").replace("px", ""));
+        int dragAreaWidth = Integer.parseInt(dragArea.getCssValue("width").replace("px", ""));
+
+        // 计算需要移动的偏移量，这里简化为拖动区域的宽度减去滑块的宽度，加上一小部分额外距离以确保滑块完全移动到末端
+        int offset = dragAreaWidth - sliderWidth + 5;
+
+        // 执行拖动操作
+        actions.clickAndHold(slider)
+                .moveByOffset(offset, 0)
+                .release()
+                .perform();
     }
 
 
