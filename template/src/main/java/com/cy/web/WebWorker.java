@@ -2,6 +2,7 @@ package com.cy.web;
 
 import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
+import com.cy.rpa.exception.TimeOutException;
 import com.cy.web.listeners.CustomEventListener;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
@@ -239,9 +240,13 @@ public class WebWorker {
      * @return the web element identified by the given By object
      */
     public WebElement getElement(By by) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-        return element;
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+            return element;
+        } catch (Exception e) {
+            throw new TimeOutException("元素未找到: "+ by.toString());
+        }
     }
 
     /**
@@ -251,9 +256,13 @@ public class WebWorker {
      * @return the list of web elements identified by the given By object
      */
     public List<WebElement> getElements(By by) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
-        return elements;
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
+            return elements;
+        } catch (Exception e) {
+            throw new TimeOutException("元素未找到: "+ by.toString());
+        }
     }
 
     /**
@@ -264,9 +273,13 @@ public class WebWorker {
      * @return the located WebElement
      */
     public WebElement getElement(By by, long time) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
-        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-        return element;
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
+            WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+            return element;
+        } catch (Exception e) {
+            throw new TimeOutException("元素未找到: "+ by.toString());
+        }
     }
 
     /**
@@ -276,9 +289,13 @@ public class WebWorker {
      * @return the list of web elements identified by the given By object
      */
     public List<WebElement> getElements(By by, long time) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
-        List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
-        return elements;
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
+            List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
+            return elements;
+        } catch (Exception e) {
+            throw new TimeOutException("元素未找到: "+ by.toString());
+        }
     }
 
     /**
