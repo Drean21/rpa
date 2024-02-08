@@ -234,14 +234,14 @@ public class WebWorker {
 
 
     /**
-     * 获取网页元素对象(默认等待10s)
+     * 获取网页元素对象(默认等待3s)
      *
      * @param by the locating mechanism
      * @return the web element identified by the given By object
      */
     public WebElement getElement(By by) {
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
             WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
             return element;
         } catch (Exception e) {
@@ -250,14 +250,14 @@ public class WebWorker {
     }
 
     /**
-     * 获取多个网页元素对象列表(默认等待10s)
+     * 获取多个网页元素对象列表(默认等待3s)
      *
      * @param by the locating mechanism
      * @return the list of web elements identified by the given By object
      */
     public List<WebElement> getElements(By by) {
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
             List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
             return elements;
         } catch (Exception e) {
