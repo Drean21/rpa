@@ -674,6 +674,23 @@ public class WebWorker {
                 .perform();
     }
 
+    /**
+     *  拖动元素到指定位置
+     * @param elementLocator 拖动元素的定位表达式
+     * @param xOffset
+     * @param yOffset
+     */
+    public void dragElementToOffset(By elementLocator, int xOffset, int yOffset) {
+        // 定位要拖动的元素
+        WebElement element = driver.findElement(elementLocator);
+
+        // 执行长按拖动操作
+        actions.clickAndHold(element)
+                .moveByOffset(xOffset, yOffset)
+                .release()
+                .perform();
+    }
+
 
     /**
      * 等待加载弹出框
