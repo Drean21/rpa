@@ -2,18 +2,16 @@ package com.cy.rpa.exception;
 
 import com.cy.RpaApplication;
 import com.cy.rpa.feedback.FeedbackUtils;
-import lombok.Data;
 
 /**
- * 业务异常（业务操作错误导致的异常，如映射错误、操作步骤错误（网页元素变更等））
+ * 超时异常（元素未找到、结果未返回）
  */
-@Data
-public class BusinessException extends RuntimeException {
+public class TimeOutException extends RuntimeException {
     protected Integer code;
 
     private String message;
 
-    public BusinessException(String msg){
+    public TimeOutException(String msg){
         super(msg);
         FeedbackUtils.highLevelException(msg);
         RpaApplication.shotdown();

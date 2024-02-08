@@ -140,7 +140,7 @@ public class RpaApplication {
         if (worker != null) {
             String className = worker.getClass().getName();
             System.out.println("worker全类名:" + className);
-            worker.worker(conf, dataUrl);
+            worker.handelWorker(conf, dataUrl);
         } else {
             throw new Exception("work初始化失败:找不到对应appCode的workJob");
         }
@@ -151,10 +151,6 @@ public class RpaApplication {
         JobWorker<?> worker = getWork("sb_jc_zhongshan_zengyuan");
         JSONObject config = new JSONObject();
         config.put("网址", "https://etax.guangdong.chinatax.gov.cn/xxmh/");
-        config.put("账号", "13790538620");
-        config.put("密码", "******");
-        config.put("业务名", "嘉兴医保批量增员");
-        config.put("牌照", "恒英人力资源服务（宁波）有限公司嘉善分公司");
         config.put("城市", "嘉兴市");
         if (worker != null) {
             String className = worker.getClass().getName();
