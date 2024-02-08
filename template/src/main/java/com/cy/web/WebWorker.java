@@ -8,12 +8,9 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.edge.EdgeDriver;
-import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.events.EventFiringWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -95,6 +92,7 @@ public class WebWorker {
         }
     }
 
+
     /**
      * 关闭浏览器
      */
@@ -103,10 +101,6 @@ public class WebWorker {
             driver.quit();
         }
     }
-
-
-    // todo 链接到特定浏览器窗口界面
-
 
 
     /**
@@ -245,7 +239,7 @@ public class WebWorker {
             WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
             return element;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: "+ by.toString());
+            throw new TimeOutException("元素未找到: " + by.toString());
         }
     }
 
@@ -261,7 +255,7 @@ public class WebWorker {
             List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
             return elements;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: "+ by.toString());
+            throw new TimeOutException("元素未找到: " + by.toString());
         }
     }
 
@@ -278,7 +272,7 @@ public class WebWorker {
             WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
             return element;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: "+ by.toString());
+            throw new TimeOutException("元素未找到: " + by.toString());
         }
     }
 
@@ -294,7 +288,7 @@ public class WebWorker {
             List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
             return elements;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: "+ by.toString());
+            throw new TimeOutException("元素未找到: " + by.toString());
         }
     }
 
@@ -738,6 +732,8 @@ public class WebWorker {
 
     /**
      * 关闭浏览器弹窗
+     *
+     * @return 弹窗文本内容
      */
     public String closeAlert() {
         try {
@@ -751,26 +747,33 @@ public class WebWorker {
     }
 
 
+    /**
+     * 滑动到页面顶部
+     */
+    public void scrollToTopByJs() {
+        js.executeScript("window.scrollTo(0, 0)");
+    }
 
+    /**
+     *  滑动到页面底部
+     */
+    public void scrollToBottomByJs() {
+        js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+    }
 
+    /**
+     * 向下滑动一定距离
+     * @param pixels
+     */
+    public void scrollDownByJs(int pixels) {
+        js.executeScript("window.scrollBy(0, " + pixels + ")");
+    }
 
-    // todo 麻烦，暂时搁置（连接已经打开的浏览器实例）
-    @Test
-    public void TestConnectRunningBrowser() {
-        // 设置WebDriverManager来自动管理EdgeDriver
-        WebDriverManager.edgedriver().setup();
-
-        // 创建EdgeOptions实例并设置远程调试地址
-        EdgeOptions options = new EdgeOptions();
-        options.setExperimentalOption("debuggerAddress", "localhost:9222"); // 确保这个端口与你的Edge实例匹配
-
-        // 使用配置的选项实例化EdgeDriver
-        WebDriver driver = new EdgeDriver(options);
-
-        // 现在，driver连接到了已经运行的Edge实例
-        System.out.println("已连接到浏览器，当前页面标题是: " + driver.getTitle());
-
-        // 记得在适当的时候关闭驱动
-        // driver.quit();
+    /**
+     *  向上滑动一定距离
+     * @param pixels
+     */
+    public void scrollUpByJs(int pixels) {
+        js.executeScript("window.scrollBy(0, -" + pixels + ")");
     }
 }
