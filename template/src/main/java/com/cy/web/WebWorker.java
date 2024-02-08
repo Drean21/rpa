@@ -65,7 +65,7 @@ public class WebWorker {
             options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
 
             // 创建 ChromeDriver 实例
-            WebDriver originalDriver = new ChromeDriver();
+            WebDriver originalDriver = new ChromeDriver(options);
             driver = new EventFiringWebDriver(originalDriver);
             // 注册自定义监听器
             driver.register(new CustomEventListener());
@@ -85,7 +85,7 @@ public class WebWorker {
             options.addArguments("--remote-allow-origins=*"); // 解决 403 出错问题,允许远程连接
             options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
             // 创建 ChromeDriver 实例
-            WebDriver originalDriver = new ChromeDriver();
+            WebDriver originalDriver = new ChromeDriver(options);
             driver = new EventFiringWebDriver(originalDriver);
             // 注册自定义监听器
             driver.register(new CustomEventListener());
@@ -105,9 +105,7 @@ public class WebWorker {
 
 
     // todo 链接到特定浏览器窗口界面
-    // todo xpath\js定位封装、事件触发封装、等待机制方法
-    // todo 多frame切换问题
-    // todo 滑块
+
 
 
     /**
@@ -252,7 +250,7 @@ public class WebWorker {
      * @param by the locating mechanism
      * @return the list of web elements identified by the given By object
      */
-    private List<WebElement> getElements(By by) {
+    public List<WebElement> getElements(By by) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
         return elements;
@@ -265,7 +263,7 @@ public class WebWorker {
      * @param time the time to wait in seconds
      * @return the located WebElement
      */
-    private WebElement getElement(By by, long time) {
+    public WebElement getElement(By by, long time) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
         return element;
@@ -277,7 +275,7 @@ public class WebWorker {
      * @param by the locating mechanism
      * @return the list of web elements identified by the given By object
      */
-    private List<WebElement> getElements(By by, long time) {
+    public List<WebElement> getElements(By by, long time) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(time));
         List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
         return elements;
