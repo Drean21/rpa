@@ -238,7 +238,7 @@ public class WebWorker {
      * @param by the locating mechanism
      * @return the web element identified by the given By object
      */
-    private WebElement getElement(By by) {
+    public WebElement getElement(By by) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
         return element;
