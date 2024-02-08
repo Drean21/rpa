@@ -608,6 +608,7 @@ public class WebWorker {
      */
     private boolean checkElement(By seletor) {
         try {
+            // todo 检验返回值，还是抛异常
             getElement(seletor, 200);
             log.info("checkElement -> true:" + seletor.toString());
             return true;
@@ -663,6 +664,79 @@ public class WebWorker {
                 .release()
                 .perform();
     }
+
+
+    /**
+     * 等待加载弹出框
+     *
+     * @param timeInSeconds 等待时间（秒）
+     * @return 弹出框对象或null
+     */
+    public Alert waitForAlert(int timeInSeconds) {
+        long startTime = System.currentTimeMillis() + (timeInSeconds * 1000);
+        while (System.currentTimeMillis() < startTime) {
+            Alert alert = getAlert();
+            if (alert != null) {
+                return alert;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 获取浏览器弹窗
+     *
+     * @return 弹出框对象或null
+     */
+    public Alert getAlert() {
+        try {
+            Alert alert = driver.switchTo().alert();
+            // 切换到默认内容
+            driver.switchTo().defaultContent();
+            return alert;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+
+    /**
+     * 处理prompt弹出框
+     *
+     * @param content 输入的内容
+     */
+    public void handlePrompt(String content) {
+        try {
+            Alert alert = waitForAlert(3);
+            if (alert != null) {
+                alert.sendKeys(content);
+                alert.accept();
+                log.info("prompt弹窗处理成功");
+            } else {
+                log.info("未找到prompt弹窗");
+            }
+        } catch (Exception e) {
+            log.info("处理prompt弹窗失败: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 关闭浏览器弹窗
+     */
+    public String closeAlert() {
+        try {
+            Alert alert = getAlert();
+            alert.accept();
+            return alert.getText();
+        } catch (Exception e) {
+            log.info("关闭alert弹窗失败: " + e.getMessage());
+            return "";
+        }
+    }
+
+
+
 
 
     // todo 麻烦，暂时搁置（连接已经打开的浏览器实例）
