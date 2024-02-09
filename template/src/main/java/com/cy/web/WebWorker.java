@@ -2,12 +2,12 @@ package com.cy.web;
 
 import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
+import com.cy.toolkit.cmdUtil;
 import com.cy.web.listeners.CustomEventListener;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -19,7 +19,6 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Iterator;
@@ -53,6 +52,12 @@ public class WebWorker {
         String chromeDriverPath = RPAConfig.envPath + File.separator + "browser\\drivers\\chromedriver.exe";
         // 设置 Chrome 可执行文件路径
         String chromePath = RPAConfig.envPath + File.separator + "browser\\chrome-win64\\chrome.exe";
+        //设置远程调试地址和端口
+        String ipAddress = "localhost";
+        int port = 9889;
+        String  debuggerAddress = ipAddress + ":" + port;
+        //是否初始化
+        boolean isInitialized=true;
 
         ChromeOptions options = new ChromeOptions();
         if (FileUtil.exist(chromeDriverPath) && FileUtil.exist(chromePath) && FileUtil.exist(userProfile)) {
@@ -63,8 +68,18 @@ public class WebWorker {
             WebDriverManager.chromedriver().setup();
         }
         if (isPortInUse(9889)){
-            options.setExperimentalOption("debuggerAddress", "localhost:9889");
-        }else{
+            isInitialized=false;
+            try {
+                log.info("端口9889被占用，尝试使用已启动的Chrome浏览器...");
+                options.setExperimentalOption("debuggerAddress", debuggerAddress);
+            } catch (Exception e) {
+                log.info("尝试使用已启动的Chrome浏览器失败，正在尝试关闭占用端口的Chrome进程...");
+                cmdUtil.closeProcessOnPort(port);
+                log.info("占用端口的Chrome进程已关闭，正在尝试重新启动Chrome浏览器...");
+                isInitialized=true;
+            }
+        }
+        if (isInitialized){
             // 添加其他 ChromeOptions 设置
             options.addArguments("--start-maximized"); // 最大化窗口
             // options.addArguments("--headless"); // 无头模式，如果需要(更容易被检测)
@@ -91,25 +106,6 @@ public class WebWorker {
         } catch (IOException e) {
             return true; // 如果端口被占用，返回 true
         }
-    }
-
-
-    @Test
-    public void tt() throws MalformedURLException {
-        ChromeOptions options = new ChromeOptions();
-        //WebDriverManager.chromedriver().setup();
-        //设置 ChromeDriver 路径
-        String chromeDriverPath = RPAConfig.envPath + File.separator + "browser\\drivers\\chromedriver.exe";
-        System.setProperty("webdriver.chrome.driver", chromeDriverPath);
-        options.setExperimentalOption("debuggerAddress", "localhost:9889");
-        WebDriver originalDriver = new ChromeDriver(options);
-        driver = new EventFiringWebDriver(originalDriver);
-        // 注册自定义监听器
-        driver.register(new CustomEventListener());
-        actions = new Actions(driver);
-        js = (JavascriptExecutor) driver;
-        driver.get("https://www.baidu.com");
-        System.out.println(driver.getTitle());
     }
 
 
