@@ -2,12 +2,12 @@ package com.cy.web;
 
 import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
-import com.cy.rpa.exception.TimeOutException;
 import com.cy.web.listeners.CustomEventListener;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -18,6 +18,9 @@ import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
@@ -45,36 +48,23 @@ public class WebWorker {
      * 初始化谷歌浏览器
      */
     public void initChrome() {
-        try {
-            //设置 ChromeDriver 路径
-            String chromeDriverPath = RPAConfig.envPath + File.separator + "browser/drivers/chromedriver.exe";
+        String userProfile = RPAConfig.envPath + File.separator + "browser\\User Data";
+        //设置 ChromeDriver 路径
+        String chromeDriverPath = RPAConfig.envPath + File.separator + "browser\\drivers\\chromedriver.exe";
+        // 设置 Chrome 可执行文件路径
+        String chromePath = RPAConfig.envPath + File.separator + "browser\\chrome-win64\\chrome.exe";
+
+        ChromeOptions options = new ChromeOptions();
+        if (FileUtil.exist(chromeDriverPath) && FileUtil.exist(chromePath) && FileUtil.exist(userProfile)) {
             System.setProperty("webdriver.chrome.driver", chromeDriverPath);
-
-            // 设置 Chrome 可执行文件路径
-            String chromePath = RPAConfig.envPath + File.separator + "browser/chrome-win64/chrome.exe";
-            ChromeOptions options = new ChromeOptions();
             options.setBinary(chromePath);
-            // 添加其他 ChromeOptions 设置
-            options.addArguments("--start-maximized"); // 最大化窗口
-            // options.addArguments("--headless"); // 无头模式，如果需要(更容易被检测)
-            options.addArguments("--disable-blink-features=AutomationControlled");//开发者模式可以减少一些网站对自动化脚本的检测。
-            //options.addArguments("--disable-gpu"); // 禁用GPU加速
-            options.addArguments("--remote-allow-origins=*"); // 解决 403 出错问题,允许远程连接
-            options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
-
-            // 创建 ChromeDriver 实例
-            WebDriver originalDriver = new ChromeDriver(options);
-            driver = new EventFiringWebDriver(originalDriver);
-            // 注册自定义监听器
-            driver.register(new CustomEventListener());
-            actions = new Actions(driver);
-            js = (JavascriptExecutor) driver;
-        } catch (Exception e) {
-            // 处理异常
-            e.printStackTrace();
+        } else {
             log.warn("路径下内置的谷歌浏览器驱动不存在！正在尝试使用WebDriverManager获取驱动...");
             WebDriverManager.chromedriver().setup();
-            ChromeOptions options = new ChromeOptions();
+        }
+        if (isPortInUse(9889)){
+            options.setExperimentalOption("debuggerAddress", "localhost:9889");
+        }else{
             // 添加其他 ChromeOptions 设置
             options.addArguments("--start-maximized"); // 最大化窗口
             // options.addArguments("--headless"); // 无头模式，如果需要(更容易被检测)
@@ -82,14 +72,44 @@ public class WebWorker {
             //options.addArguments("--disable-gpu"); // 禁用GPU加速
             options.addArguments("--remote-allow-origins=*"); // 解决 403 出错问题,允许远程连接
             options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
-            // 创建 ChromeDriver 实例
-            WebDriver originalDriver = new ChromeDriver(options);
-            driver = new EventFiringWebDriver(originalDriver);
-            // 注册自定义监听器
-            driver.register(new CustomEventListener());
-            actions = new Actions(driver);
-            js = (JavascriptExecutor) driver;
+            options.addArguments("user-data-dir=" + userProfile);
+            options.addArguments("--remote-debugging-port=9889"); // 设置远程调试端口
         }
+        // 创建 ChromeDriver 实例
+        WebDriver originalDriver = new ChromeDriver(options);
+        // todo 问题的关键是driver并没有更新
+        driver = new EventFiringWebDriver(originalDriver);
+        // 注册自定义监听器
+        driver.register(new CustomEventListener());
+        actions = new Actions(driver);
+        js = (JavascriptExecutor) driver;
+    }
+
+    public boolean isPortInUse(int port) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            return false; // 如果端口没有被占用，返回 false
+        } catch (IOException e) {
+            return true; // 如果端口被占用，返回 true
+        }
+    }
+
+
+    @Test
+    public void tt() throws MalformedURLException {
+        ChromeOptions options = new ChromeOptions();
+        //WebDriverManager.chromedriver().setup();
+        //设置 ChromeDriver 路径
+        String chromeDriverPath = RPAConfig.envPath + File.separator + "browser\\drivers\\chromedriver.exe";
+        System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+        options.setExperimentalOption("debuggerAddress", "localhost:9889");
+        WebDriver originalDriver = new ChromeDriver(options);
+        driver = new EventFiringWebDriver(originalDriver);
+        // 注册自定义监听器
+        driver.register(new CustomEventListener());
+        actions = new Actions(driver);
+        js = (JavascriptExecutor) driver;
+        driver.get("https://www.baidu.com");
+        System.out.println(driver.getTitle());
     }
 
 
@@ -109,10 +129,15 @@ public class WebWorker {
      * @param url
      */
     public void openUrl(String url) {
-        if (driver == null) {
-            initChrome();
+        // todo 都快死循环了都
+        if (switchTabByUrl(url)) {
+            log.info("检测到该地址已经打开，无需重复打开");
+        } else {
+            if (driver == null) {
+                initChrome();
+            }
+            driver.get(url);
         }
-        driver.get(url);
     }
 
     /**
@@ -239,7 +264,8 @@ public class WebWorker {
             WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
             return element;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: " + by.toString());
+            log.info("元素未找到: " + by.toString());
+            return null;
         }
     }
 
@@ -255,7 +281,8 @@ public class WebWorker {
             List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
             return elements;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: " + by.toString());
+            log.info("元素未找到: " + by.toString());
+            return null;
         }
     }
 
@@ -272,7 +299,8 @@ public class WebWorker {
             WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
             return element;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: " + by.toString());
+            log.info("元素未找到: " + by.toString());
+            return null;
         }
     }
 
@@ -288,7 +316,8 @@ public class WebWorker {
             List<WebElement> elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(by));
             return elements;
         } catch (Exception e) {
-            throw new TimeOutException("元素未找到: " + by.toString());
+            log.info("元素未找到: " + by.toString());
+            return null;
         }
     }
 
@@ -609,6 +638,30 @@ public class WebWorker {
         return false;
     }
 
+    public boolean switchTabByUrl(String urlPrefix) {
+        // 获取当前浏览器的所有窗口句柄
+        Set<String> handles = driver.getWindowHandles();
+        // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
+        String currentHandle = driver.getWindowHandle();
+        // 遍历窗口句柄
+        for (String handle : handles) {
+            try {
+                driver.switchTo().window(handle); // 切换到窗口
+                String currentUrl = driver.getCurrentUrl(); // 获取当前窗口的URL
+                // 如果当前URL以指定前缀开头，则返回true
+                if (urlPrefix.equals(currentUrl)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                log.error("寻找标签页出现异常：" + e.getMessage());
+            }
+        }
+        // 切换失败，恢复到原来的窗口
+        driver.switchTo().window(currentHandle);
+        log.info("未找到具有指定URL前缀的标签页");
+        return false;
+    }
+
     /**
      * 检查页面是否包含指定的元素
      *
@@ -629,7 +682,7 @@ public class WebWorker {
 
 
     /**
-     * 鼠标移动到指定元素（可实现悬停效果）
+     * 鼠标移动到指定元素
      *
      * @param seletor
      */
@@ -637,6 +690,7 @@ public class WebWorker {
         WebElement element = getElement(seletor);
         actions.moveToElement(element).perform();
     }
+
 
     /**
      * 模拟鼠标长按指定元素
@@ -675,7 +729,8 @@ public class WebWorker {
     }
 
     /**
-     *  拖动元素到指定位置
+     * 拖动元素到指定位置
+     *
      * @param elementLocator 拖动元素的定位表达式
      * @param xOffset
      * @param yOffset
@@ -772,7 +827,7 @@ public class WebWorker {
     }
 
     /**
-     *  滑动到页面底部
+     * 滑动到页面底部
      */
     public void scrollToBottomByJs() {
         js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
@@ -780,6 +835,7 @@ public class WebWorker {
 
     /**
      * 向下滑动一定距离
+     *
      * @param pixels
      */
     public void scrollDownByJs(int pixels) {
@@ -787,7 +843,8 @@ public class WebWorker {
     }
 
     /**
-     *  向上滑动一定距离
+     * 向上滑动一定距离
+     *
      * @param pixels
      */
     public void scrollUpByJs(int pixels) {
