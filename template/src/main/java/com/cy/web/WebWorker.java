@@ -53,9 +53,9 @@ public class WebWorker {
         //设置远程调试地址和端口
         String ipAddress = "localhost";
         int port = 9889;
-        String  debuggerAddress = ipAddress + ":" + port;
+        String debuggerAddress = ipAddress + ":" + port;
         //是否初始化
-        boolean isInitialized=true;
+        boolean isInitialized = true;
 
         ChromeOptions options = new ChromeOptions();
         if (FileUtil.exist(chromeDriverPath) && FileUtil.exist(chromePath) && FileUtil.exist(userProfile)) {
@@ -65,8 +65,8 @@ public class WebWorker {
             log.warn("路径下内置的谷歌浏览器驱动不存在！正在尝试使用WebDriverManager获取驱动...");
             WebDriverManager.chromedriver().setup();
         }
-        if (cmdUtil.isPortInUse(9889)){
-            isInitialized=false;
+        if (cmdUtil.isPortInUse(9889)) {
+            isInitialized = false;
             try {
                 log.info("端口9889被占用，尝试使用已启动的Chrome浏览器...");
                 options.setExperimentalOption("debuggerAddress", debuggerAddress);
@@ -74,10 +74,10 @@ public class WebWorker {
                 log.info("尝试使用已启动的Chrome浏览器失败，正在尝试关闭占用端口的Chrome进程...");
                 cmdUtil.closeProcessOnPort(port);
                 log.info("占用端口的Chrome进程已关闭，正在尝试重新启动Chrome浏览器...");
-                isInitialized=true;
+                isInitialized = true;
             }
         }
-        if (isInitialized){
+        if (isInitialized) {
             // 添加其他 ChromeOptions 设置
             options.addArguments("--start-maximized"); // 最大化窗口
             // options.addArguments("--headless"); // 无头模式，如果需要(更容易被检测)
@@ -99,7 +99,7 @@ public class WebWorker {
     }
 
     /**
-     *  初始化浏览器缩放比例
+     * 初始化浏览器缩放比例
      */
     public void initBrowserZoom() {
         // 模拟按下 Ctrl 键并同时按下 0 键
@@ -155,28 +155,29 @@ public class WebWorker {
      * @return the file path of the captured screenshot
      */
     public String captureElementScreenshot(By by) {
-        String path = RPAConfig.cachePath + File.separator + System.currentTimeMillis() + ".png";
         try {
+            String path = RPAConfig.cachePath + File.separator + System.currentTimeMillis() + ".png";
             // 定位要截图的元素，可以使用元素的XPath、CSS选择器等方法
             WebElement element = getElement(by);
             // 截取指定元素的截图
             File screenshot = ((TakesScreenshot) element).getScreenshotAs(OutputType.FILE);
             //FileUtils.copyFile(screenshot, new File("ele  ment_screenshot.png"));
             FileUtil.copyFile(screenshot, new File(path));
+            return  path;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("网页元素截屏失败{}", e.getMessage());
+            return  "";
         }
-        return path;
     }
 
     /**
      * 网页元素截屏
      *
-     * @param by the locating mechanism for the web element
+     * @param by   the locating mechanism for the web element
      * @param path the file path to save the screenshot
      * @return the file path of the captured screenshot
      */
-    public String captureElementScreenshot(By by,String path) {
+    public String captureElementScreenshot(By by, String path) {
         try {
             // 定位要截图的元素，可以使用元素的XPath、CSS选择器等方法
             WebElement element = getElement(by);
@@ -184,10 +185,11 @@ public class WebWorker {
             File screenshot = ((TakesScreenshot) element).getScreenshotAs(OutputType.FILE);
             //FileUtils.copyFile(screenshot, new File("ele  ment_screenshot.png"));
             FileUtil.copyFile(screenshot, new File(path));
+            return path;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("网页元素截屏失败{}", e.getMessage());
+            return "";
         }
-        return path;
     }
 
 
