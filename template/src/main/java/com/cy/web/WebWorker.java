@@ -18,8 +18,6 @@ import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
@@ -92,14 +90,21 @@ public class WebWorker {
         }
         // 创建 ChromeDriver 实例
         WebDriver originalDriver = new ChromeDriver(options);
-        // todo 问题的关键是driver并没有更新
         driver = new EventFiringWebDriver(originalDriver);
         // 注册自定义监听器
         driver.register(new CustomEventListener());
         actions = new Actions(driver);
         js = (JavascriptExecutor) driver;
+        initBrowserZoom();
     }
 
+    /**
+     *  初始化浏览器缩放比例
+     */
+    public void initBrowserZoom() {
+        // 模拟按下 Ctrl 键并同时按下 0 键
+        actions.keyDown(Keys.CONTROL).sendKeys("0").perform();
+    }
 
     /**
      * 关闭浏览器
@@ -117,13 +122,12 @@ public class WebWorker {
      * @param url
      */
     public void openUrl(String url) {
-        // todo 都快死循环了都
+        if (driver == null) {
+            initChrome();
+        }
         if (switchTabByUrl(url)) {
             log.info("检测到该地址已经打开，无需重复打开");
         } else {
-            if (driver == null) {
-                initChrome();
-            }
             driver.get(url);
         }
     }
@@ -152,6 +156,27 @@ public class WebWorker {
      */
     public String captureElementScreenshot(By by) {
         String path = RPAConfig.cachePath + File.separator + System.currentTimeMillis() + ".png";
+        try {
+            // 定位要截图的元素，可以使用元素的XPath、CSS选择器等方法
+            WebElement element = getElement(by);
+            // 截取指定元素的截图
+            File screenshot = ((TakesScreenshot) element).getScreenshotAs(OutputType.FILE);
+            //FileUtils.copyFile(screenshot, new File("ele  ment_screenshot.png"));
+            FileUtil.copyFile(screenshot, new File(path));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return path;
+    }
+
+    /**
+     * 网页元素截屏
+     *
+     * @param by the locating mechanism for the web element
+     * @param path the file path to save the screenshot
+     * @return the file path of the captured screenshot
+     */
+    public String captureElementScreenshot(By by,String path) {
         try {
             // 定位要截图的元素，可以使用元素的XPath、CSS选择器等方法
             WebElement element = getElement(by);
@@ -524,7 +549,7 @@ public class WebWorker {
             String next = it.next();
             try {
                 driver.switchTo().window(next);//切换到新窗口
-                //initBrowserZoom();
+                initBrowserZoom();
                 if (getCurrentPageTitle().contains(tabTitle)) {
                     log.info("切换到标签页(title):" + driver.getTitle());
                     return true;
@@ -578,7 +603,7 @@ public class WebWorker {
                 String next = it.next();
                 try {
                     driver.switchTo().window(next);//切换到新窗口
-                    //initBrowserZoom();
+                    initBrowserZoom();
                     if (checkElement(by)) {
                         return true;
                     }
