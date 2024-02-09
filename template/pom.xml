@@ -16,7 +16,8 @@
 
     <properties>
         <selenium.version>4.17.0</selenium.version>
-        <junit.version>4.13.2</junit.version>
+        <sikulix.version>2.0.5</sikulix.version>
+        <jna.version>5.6.0</jna.version>
     </properties>
 
     <dependencies>
@@ -40,7 +41,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
         </dependency>
         <dependency>
             <groupId>cn.hutool</groupId>
@@ -58,6 +58,19 @@
             <artifactId>httpclient5</artifactId>
             <version>5.2.1</version>
             <!--<scope>test</scope>-->
+        </dependency>
+
+        <!--添加SikuliX依赖,GUI自动化控制-->
+        <dependency>
+            <groupId>com.sikulix</groupId>
+            <artifactId>sikulixapi</artifactId>
+            <version>${sikulix.version}</version>
+        </dependency>
+        <!--获取win系统支持-->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+            <version>${jna.version}</version>
         </dependency>
     </dependencies>
 
