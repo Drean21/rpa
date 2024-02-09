@@ -79,7 +79,7 @@ public class Robot {
     /**
      * 模拟一次回车键
      */
-    public static void ClickEnterKey() {
+    public static void keyEnter() {
         ThreadPool.getInstance().execute(new Thread(new Runnable() {
             @Override
             public void run() {
@@ -101,7 +101,7 @@ public class Robot {
     public static void mouseMoveAndClick(int x, int y) {
         mouseMove(x, y);
         sleep(200);
-        clickMouse(1);
+        mouseClick(1);
     }
 
 
@@ -359,7 +359,7 @@ public class Robot {
      *
      * @param j 点击次数
      */
-    public static void clickMouse(int j) {
+    public static void mouseClick(int j) {
         try {
             for (int i = 0; i < j; i++) {
                 getInstence().mousePress(InputEvent.BUTTON1_MASK);
@@ -390,7 +390,7 @@ public class Robot {
     /**
      * 模拟鼠标右键点击操作
      */
-    public static void rightMouse() {
+    public static void mouseClickRight() {
         try {
             getInstence().mousePress(InputEvent.BUTTON3_MASK);
             getInstence().delay(80);
