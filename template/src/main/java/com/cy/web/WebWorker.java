@@ -67,7 +67,7 @@ public class WebWorker {
             log.warn("路径下内置的谷歌浏览器驱动不存在！正在尝试使用WebDriverManager获取驱动...");
             WebDriverManager.chromedriver().setup();
         }
-        if (isPortInUse(9889)){
+        if (cmdUtil.isPortInUse(9889)){
             isInitialized=false;
             try {
                 log.info("端口9889被占用，尝试使用已启动的Chrome浏览器...");
@@ -98,14 +98,6 @@ public class WebWorker {
         driver.register(new CustomEventListener());
         actions = new Actions(driver);
         js = (JavascriptExecutor) driver;
-    }
-
-    public boolean isPortInUse(int port) {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            return false; // 如果端口没有被占用，返回 false
-        } catch (IOException e) {
-            return true; // 如果端口被占用，返回 true
-        }
     }
 
 
