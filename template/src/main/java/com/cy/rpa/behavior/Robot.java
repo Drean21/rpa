@@ -1,14 +1,18 @@
 package com.cy.rpa.behavior;
 
+import com.cy.rpa.RPAConfig;
 import com.cy.toolkit.ThreadPool;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Arrays;
 
 import static cn.hutool.core.thread.ThreadUtil.sleep;
@@ -398,4 +402,46 @@ public class Robot {
         }
     }
 
+
+    /**
+     * 截取屏幕上的指定区域并保存为图片文件
+     * @param rectangle 截取的区域
+     */
+    public static String captureScreen(Rectangle rectangle) {
+        try {
+            String filename = RPAConfig.cachePath + File.separator + System.currentTimeMillis() + ".png";
+            // 截取指定区域的屏幕截图
+            BufferedImage screenshot = getInstence().createScreenCapture(rectangle);
+
+            // 保存截图为图片文件
+            ImageIO.write(screenshot, "png", new File(filename));
+
+            System.out.println("截图成功，已保存为：" + filename);
+            return filename;
+        } catch (Exception e) {
+            log.error("截屏失败:{}",e.getMessage());
+            return "";
+        }
+    }
+
+    /**
+     * 截取屏幕上的指定区域并保存为图片文件
+     * @param rectangle 截取的区域
+     * @param filename 图片文件名
+     */
+    public static String captureScreen(Rectangle rectangle,String filename) {
+        try {
+            // 截取指定区域的屏幕截图
+            BufferedImage screenshot = getInstence().createScreenCapture(rectangle);
+
+            // 保存截图为图片文件
+            ImageIO.write(screenshot, "png", new File(filename));
+
+            System.out.println("截图成功，已保存为：" + filename);
+            return filename;
+        } catch (Exception e) {
+            log.error("截屏失败:{}",e.getMessage());
+            return "";
+        }
+    }
 }
