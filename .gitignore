@@ -39,3 +39,4 @@ build/
 ### Specific directories ###
 /template/browser/
 /template/cache/
+/template/lib/
