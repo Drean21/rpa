@@ -1,9 +1,9 @@
-package com.cy.web;
+package com.cy.rpa.behavior.web;
 
 import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
+import com.cy.rpa.behavior.web.listeners.CustomEventListener;
 import com.cy.toolkit.cmdUtil;
-import com.cy.web.listeners.CustomEventListener;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -24,14 +24,14 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * WebWorker 网页自动化根类
+ * Browser 网页自动化根类
  *
  * @author Liang Zhaoyuan
  * @version 2024/02/01 19:07
  **/
 @Data
 @Slf4j
-public class WebWorker {
+public class Browser {
 
     /*浏览器驱动*/
     private EventFiringWebDriver driver;
@@ -201,6 +201,10 @@ public class WebWorker {
     public void clickElement(By by) {
         //getElement(by).click();
         actions.moveToElement(getElement(by)).click().perform();
+        // 行为最一致但感觉很奇怪，不应该使用js解决——是的，js无法实现点击蓝奏云的文件上传（不能精确触发）
+        //js.executeScript("arguments[0].click();", getElement(by));
+        // 切换最新的标签页
+        switchToNewTab();
     }
 
     /**
@@ -235,10 +239,10 @@ public class WebWorker {
      *
      * @return the WebDriver instance created
      */
-    public WebWorker newChrome() {
-        WebWorker webWorker = new WebWorker();
-        webWorker.initChrome();
-        return webWorker;
+    public Browser newChrome() {
+        Browser browser = new Browser();
+        browser.initChrome();
+        return browser;
     }
 
 
@@ -371,18 +375,22 @@ public class WebWorker {
     /**
      * 切换到指定的Frame
      *
-     * @param FrameElement Frame窗体
+     * @param by 定位选择器
      * @return
      */
-    public boolean switchToFrame(WebElement FrameElement) {
+    public boolean switchToFrame(By by) {
         try {
+            WebElement FrameElement = getElement(by);
             driver.switchTo().frame(FrameElement);
+            log.info("Frame切换成功");
             return true;
         } catch (Exception e) {
             log.error("iframe切换失败,原因：%s", e.getMessage());
             return false;
         }
     }
+
+
 
     /**
      * 切换到父级Frame
@@ -407,6 +415,7 @@ public class WebWorker {
     public boolean switchToDefaultContent() {
         try {
             driver.switchTo().defaultContent();
+            log.info("Frame切换回顶层容器");
             return true;
         } catch (Exception e) {
             log.error("iframe切换失败,原因：%s", e.getMessage());
@@ -573,6 +582,7 @@ public class WebWorker {
      */
     public String getCurrentPageTitle() {
         String title = driver.getTitle();
+        log.info("当前页标题:" + title);
         return StringUtils.isNotBlank(title) ? title : "null";
     }
 
@@ -653,7 +663,7 @@ public class WebWorker {
         return false;
     }
 
-    public boolean switchTabByUrl(String urlPrefix) {
+    public boolean switchTabByUrl(String url) {
         // 获取当前浏览器的所有窗口句柄
         Set<String> handles = driver.getWindowHandles();
         // 记录当前窗口句柄，用于在切换失败时恢复到原来的窗口
@@ -664,7 +674,7 @@ public class WebWorker {
                 driver.switchTo().window(handle); // 切换到窗口
                 String currentUrl = driver.getCurrentUrl(); // 获取当前窗口的URL
                 // 如果当前URL以指定前缀开头，则返回true
-                if (urlPrefix.equals(currentUrl)) {
+                if (url.equals(currentUrl)) {
                     return true;
                 }
             } catch (Exception e) {
@@ -673,7 +683,7 @@ public class WebWorker {
         }
         // 切换失败，恢复到原来的窗口
         driver.switchTo().window(currentHandle);
-        log.info("未找到具有指定URL前缀的标签页");
+        log.info("未找到指定URL的标签页");
         return false;
     }
 
@@ -683,7 +693,7 @@ public class WebWorker {
      * @param seletor
      * @return
      */
-    private boolean checkElement(By seletor) {
+    public boolean checkElement(By seletor) {
         try {
             // todo 检验返回值，还是抛异常
             getElement(seletor, 200);
@@ -865,4 +875,11 @@ public class WebWorker {
     public void scrollUpByJs(int pixels) {
         js.executeScript("window.scrollBy(0, -" + pixels + ")");
     }
+
+
+
+
+    // todo 下载、上床，和win的句柄交互实现
+    
+
 }
