@@ -6,8 +6,10 @@ import com.cy.office.OfficeWorker;
 import com.cy.os.OperatingSystemWorker;
 import com.cy.rpa.exception.BusinessException;
 import com.cy.rpa.exception.TimeOutException;
-import com.cy.web.WebWorker;
+import com.cy.rpa.behavior.web.Browser;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Objects;
 
 /**
  * JobWorker rpa任务基础父类
@@ -21,7 +23,7 @@ public abstract class JobWorker<T> {
 
     // todo 组合方法将其他worker加进来达到多继承的类似效果
     // todo 任务会写和反馈方法封装
-    public WebWorker web = new WebWorker();
+    public Browser web = new Browser();
     public OperatingSystemWorker os = new OperatingSystemWorker();
     public OfficeWorker office = new OfficeWorker();
 
@@ -37,22 +39,32 @@ public abstract class JobWorker<T> {
 
     /**
      * 增强worker方法
+     *
      * @param param
      * @param dataUrl
      */
     public void handelWorker(JSONObject param, String dataUrl) {
-        log.info("开始执行任务:{}", param.toJSONString());
+        String envType = Objects.isNull(param) ?
+                "dev" : param.getString("envType");
+        log.info("环境类型:{}", envType);
+        log.info("开始执行任务:{}", "dev".equals(envType) ? "" : param.toJSONString());
         try {
             worker(param, dataUrl);
         } catch (Exception e) {
             // todo 待完善处理
-            if (e instanceof BusinessException){
-                log.error("业务异常:{}",e.getMessage());
-            }else if (e instanceof TimeOutException){
-                log.info("超时异常:{}",e.getMessage());
-            }else{
-                log.info("程序异常:{}",e.getMessage());
+            if (e instanceof BusinessException) {
+                log.error("业务异常:{}", e.getMessage());
+            } else if (e instanceof TimeOutException) {
+                log.info("超时异常:{}", e.getMessage());
+            } else {
+                log.info("程序异常:{}", e.getMessage());
             }
+        } finally {
+            //web.closeBrowser();
+            if (!"dev".equalsIgnoreCase(envType)) {
+                web.closeBrowser();
+            }
+            // todo 检测cache文件夹，定期清理（找到最早的文件创建日期（修改日期）和当前时间比较，满足条件清理
         }
         //还要带上结束时间
         log.info("任务执行完成");
@@ -70,5 +82,9 @@ public abstract class JobWorker<T> {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void log(String msg) {
+        log.info(msg);
     }
 }
