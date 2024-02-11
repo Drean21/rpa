@@ -1,10 +1,16 @@
 package com.cy.rpa.behavior;
 
 import com.cy.rpa.RPAConfig;
+import com.cy.rpa.config.SikulixManage;
+import com.cy.rpa.jna.JNAUtils;
+import com.cy.toolkit.ScreenUtils;
 import com.cy.toolkit.ThreadPool;
+import com.sun.jna.platform.win32.WinDef;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.sikuli.basics.Settings;
+import org.sikuli.script.*;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -13,7 +19,10 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static cn.hutool.core.thread.ThreadUtil.sleep;
 
@@ -33,6 +42,21 @@ public class Robot {
     private static final int hz = 150;
 
     private static java.awt.Robot instence = null;
+
+
+    /**
+     * 桌面截图路径
+     */
+    private static final String winPicPath = RPAConfig.cachePath+File.separator + "win.png";
+
+
+    static {
+        String lagnguagePath = RPAConfig.envPath + File.separator + "lib";
+        String lagnguage = "chi_sim";
+
+        Settings.OcrDataPath = RPAConfig.envPath + File.separator + "lib";
+        Settings.OcrLanguage = lagnguage;
+    }
 
     /**
      * 获取Robot对象实例
@@ -443,5 +467,902 @@ public class Robot {
             log.error("截屏失败:{}",e.getMessage());
             return "";
         }
+    }
+
+
+    // todo 存在问题，待解决（暂时搁置）
+    /*------------------------------------基于Sikulix的GUI操作-----------------------------------------------*/
+
+    /**
+     * 模拟键盘输入文本的方法【目前只支持英文字符】
+     *
+     * @param text 需要输入的文本
+     */
+    public static void type(String text) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            screen.type(text);
+        } catch (Exception e) {
+            log.error("sikuli type error", e.getMessage());
+        }
+    }
+
+    /**
+     * 模拟点击屏幕上具有特定图案的位置的方法
+     *
+     * @param btnPicPath 就是要点击的位置对应的图案路径
+     * @return 如果成功根据图案进行点击返回true，如果找不到对应的图案或者发生其他异常则返回false
+     */
+    public static void clickByImg(String btnPicPath) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            screen.click(btnPicPath);
+        } catch (FindFailed e) {
+            log.error("sikuli clickByImg error", e.getMessage());
+        }
+    }
+
+    /**
+     * 模拟点击特定图案的方法，但在点击前会等待一定的时间
+     * @param btnPicPath 需要点击的图案路径
+     * @param waitTime 点击前等待的时间（单位：秒）
+     * @return 如果成功点击了指定图案，返回true，如果在等待时间内找不到图案或者发生其他异常，返回false
+     */
+    public static boolean clickByImg(String btnPicPath, int waitTime) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            screen.wait(btnPicPath, waitTime);
+            //screen.wait(1D);
+            screen.click(btnPicPath);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+
+    /**
+     * 模拟鼠标悬停在特定图案上的方法，悬停前会等待一定时间
+     * @param btnPicPath 需要悬停的图案路径
+     * @param waitTime 悬停前等待的时间（单位：秒）
+     * @return 如果成功在指定图案上悬停，返回true，如果在等待时间内未找到图案或者发生其他异常，返回false
+     */
+    public static boolean hoverByImg(String btnPicPath, int waitTime) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            screen.wait(btnPicPath, waitTime);
+            screen.wait(1D);
+            screen.hover(btnPicPath);
+            return true;
+        } catch (FindFailed findFailed) {
+            return false;
+        }
+    }
+
+    /**
+     * 等待特定图案出现的方法
+     * @param btnPicPath 需要等待出现的图案路径
+     * @param waitTime 最多等待的时间（单位：秒）
+     * @return 如果在指定时间内找到图案，返回true，如果无法在指定时间内找到图案或者发生其他异常，返回false
+     */
+    public static boolean waitByImg(String btnPicPath, int waitTime) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            Match wait = screen.wait(btnPicPath, waitTime);
+            if (wait != null) {
+                return true;
+            }
+            return false;
+        } catch (FindFailed findFailed) {
+            return false;
+        }
+    }
+
+
+    /**
+     * 等待识别到特定文本的方法
+     * @param text 需要识别的文本
+     * @param waitTime 等待识别的最大时间（单位：秒）
+     * @return 如果在指定时间内识别到了指定文本，返回true，如果无法在指定时间内识别到文本或者发生其他异常，返回false
+     */
+    public static boolean waitFindText(String text, int waitTime) {
+        if (StringUtils.isEmpty(text)) {
+            return false;
+        }
+        TextRecognizer start = TextRecognizer.start();
+        for (int i = 0; i < waitTime / 1; i++) {
+            try {
+                ScreenUtils.getScreen(winPicPath);
+                String value = start.recognize(ImageIO.read(new File("win.png")));
+                System.out.println(value);
+                if (value.trim().contains(text.trim())) {
+                    return true;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (AWTException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    new File(winPicPath).delete();
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 双击指定图片元素的方法
+     * @param btnPicPath 需要双击的图片路径
+     * @param waitTime 最多等待时间（单位：秒），在这段时间内如果找不到指定图片则会抛出异常
+     * @return 如果成功找到并双击了指定图片，返回true，未找到或者出现异常，返回false
+     */
+    public static boolean doubleClick(String btnPicPath, int waitTime) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            screen.wait(btnPicPath, waitTime);
+            screen.doubleClick(btnPicPath);
+            return true;
+        } catch (FindFailed findFailed) {
+            return false;
+        }
+    }
+
+
+    /**
+     * 把一个对象拖拽到另一个对象的方法
+     * @param drog 需要拖拽的对象的图片路径
+     * @param target 目标位置的图片路径
+     * @param waitTime 最多等待时间（单位：秒），在这段时间内如果找不到指定图片则会抛出异常
+     * @return 如果成功找到并拖拽了指定图片，返回true，未找到或者出现异常，返回false
+     */
+    public static boolean drog(String drog, String target, int waitTime) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            screen.wait(drog, waitTime);
+            screen.dragDrop(drog, target);
+            return true;
+        } catch (FindFailed findFailed) {
+            return false;
+        }
+    }
+
+    /**
+     * 将目标对象沿x轴移动一定的距离
+     * @param drog 需要拖拽的对象的图片路径
+     * @param px 沿x轴需要移动的距离
+     * @param waitTime 最多等待时间（单位：秒），在这段时间内如果找不到指定图片则会抛出异常
+     * @return 如果成功找到并拖拽了指定图片，返回true，未找到或者出现异常，返回false
+     * @throws FindFailed 抛出异常，若在尝试找到指定图片时出现错误
+     */
+    public static boolean drog(String drog, int px, int waitTime) {
+        try {
+            Screen screen = SikulixManage.getScreen();
+            screen.wait(drog, waitTime);
+            Match match = screen.find(drog);
+            screen.dragDrop(match, new Location(match.getX() + px, 0));
+            return true;
+        } catch (FindFailed findFailed) {
+            return false;
+        }
+    }
+
+
+    /*------JNA功能区------------------------基于句柄的交互操作---------------------------------------------------*/
+
+    /**
+     * 文件下载指定绝对路径并保存 已经调节到相对稳定装态,没有大问题切勿修改
+     *
+     * @param savePath
+     * @return
+     */
+    public  boolean specifyPathAndSaveFile(String savePath) {
+        //等待窗体出现
+        boolean saveed = false;
+        try {
+            saveed = specifyPathAndSaveFile(savePath, 35);
+
+        } catch (Exception e) {
+            log.error("JNA 保存文件失败;" + e.getMessage());
+            e.printStackTrace();
+        }
+
+       /* if (!saveed) {
+            try {
+                setAndctrlVClipboardData(savePath);
+                //保存文件
+                doOneClickEnterKey();
+                saveed = true;
+                log.info("Robot 保存文件成功;");
+            } catch (Exception e) {
+                error("Robot 保存文件失败;" + e.getMessage());
+            }
+        }*/
+        //清空win弹窗
+        closeHandle(getWinRootElementByClassNameAndTitle(null, "另存为"));
+        closeHandle(getWinRootElementByClassNameAndTitle("#32770", "确认另存为"));
+        return saveed;
+    }
+
+
+    /**
+     * 寻找并等待title为 "另存为" 的浏览器窗体句柄,指定文件保存路径,点击保存
+     *
+     * @param savePath
+     * @param sceanTime
+     * @return boolean
+     */
+    public boolean specifyPathAndSaveFile(String savePath, int sceanTime) {
+        long startTime = System.currentTimeMillis();
+        //是否执行成功
+        final boolean[] saveed = {false};
+        //是否设置输入框内容失败
+        boolean setError = false;
+        final boolean[] runOver = {false};
+        WinDef.HWND handle = waitGetWinRootElement(null, "另存为", sceanTime);
+        if (handle != null) {
+            if (setWinEditValue(handle, savePath)) {
+                log.info("第一次文件路径写入成功...");
+            } else {
+                long countTime = System.currentTimeMillis();
+                WinDef.HWND edit = waitGetWinElementInDesktop("Edit", null, 5);
+                if (edit != null) {
+                    JNAUtils.simulateClick(edit);
+                    combinationClickKeys(KeyEvent.VK_CONTROL,KeyEvent.VK_A);
+                    JNAUtils.simulateTextInput(edit, savePath);
+                }else{
+                    setError = true;
+                }
+                while (true) {
+                    sleep(10);
+                    if (System.currentTimeMillis() - countTime > 5 * 1000) {
+                        setError = true;
+                        break;
+                    }
+                    String winHWNDValue = getWinHWNDValue(edit);
+                    if (savePath.equals(winHWNDValue)) {
+                        setError = false;
+                        log.info("文件路径写入成功:" + winHWNDValue);
+                        break;
+                    } else {
+                        log.info("文件路径写入失败:" + winHWNDValue);
+                    }
+                }
+            }
+            sleep(500);
+            WinDef.HWND finalHandle = handle;
+            ThreadPool.getSingleExecutorService().execute(new Runnable() {
+                @Override
+                public void run() {
+                    if (clickWinButton(finalHandle, "保存(&S)")) {
+                        saveed[0] = true;
+                        log.info("保存按钮点击成功...");
+                    } else {
+                        //doOneClickEnterKey();
+                        keyEnter();
+                        log.info("保存按钮点击失败...触发回车键");
+                    }
+                    runOver[0] = true;
+                }
+            });
+            ThreadPool.getSingleExecutorService().execute(new Runnable() {
+                @Override
+                public void run() {
+                    WinDef.HWND handle = waitGetWinRootElement("#32770", "确认另存为", 3);
+                    if (handle != null) {
+                        if (clickWinButton(handle, "是(&Y)")) {
+                            saveed[0] = true;
+                            log.info("保存确认按钮点击成功...");
+                        } else {
+                            log.info("保存按钮点击失败...");
+                        }
+                        runOver[0] = true;
+                    }
+                }
+            });
+        }
+
+        while (!(saveed[0] || runOver[0])) {
+            if (System.currentTimeMillis() - startTime > sceanTime * 1000) {
+                break;
+            }
+            sleep(50);
+        }
+
+        if (saveed[0] && !setError) {
+            System.out.println("保存完成,保存路径:" + savePath);
+            return true;
+        } else {
+            System.out.println("保存失败,保存路径:" + savePath);
+            return false;
+        }
+    }
+
+    /**
+     * 寻找并等待title为 "另存为" 的浏览器窗体句柄,指定文件保存路径,点击保存
+     *
+     * @param savePath
+     * @param sceanTime
+     * @return boolean
+     */
+    public boolean specifyPathAndSaveFileIE(String savePath, int sceanTime) {
+        long startTime = System.currentTimeMillis();
+        //是否执行成功
+        final boolean[] saveed = {false};
+        //是否设置输入框内容失败
+        boolean setError = false;
+        final boolean[] runOver = {false};
+        WinDef.HWND handle = waitGetWinRootElement("#32770", "保存文档", sceanTime);
+        if (handle != null) {
+            if (setWinEditValue(handle, savePath)) {
+                log.info("第一次文件路径写入成功...");
+            } else {
+                long countTime = System.currentTimeMillis();
+                WinDef.HWND edit = waitGetWinElementInDesktop("Edit", null, 5);
+                if (edit != null) {
+                    JNAUtils.simulateTextInput(edit, savePath);
+                }
+                while (true) {
+                    sleep(100);
+                    if (System.currentTimeMillis() - countTime > 5 * 1000) {
+                        setError = true;
+                        break;
+                    }
+                    String winHWNDValue = getWinHWNDValue(edit);
+                    if (savePath.equals(winHWNDValue)) {
+                        setError = false;
+                        log.info("文件路径写入成功:" + winHWNDValue);
+                        break;
+                    } else {
+                        log.info("文件路径写入失败:" + winHWNDValue);
+                    }
+                }
+            }
+            sleep(500);
+            WinDef.HWND finalHandle = handle;
+            ThreadPool.getSingleExecutorService().execute(new Runnable() {
+                @Override
+                public void run() {
+                    if (clickWinButton(finalHandle, "保存(&S)")) {
+                        saveed[0] = true;
+                        log.info("保存按钮点击成功...");
+                    } else {
+                        log.info("保存按钮点击失败...");
+                    }
+                    runOver[0] = true;
+                }
+            });
+            ThreadPool.getSingleExecutorService().execute(new Runnable() {
+                @Override
+                public void run() {
+                    WinDef.HWND handle = waitGetWinRootElement("#32770", "确认另存为", 3);
+                    if (handle != null) {
+                        if (clickWinButton(handle, "是(&Y)")) {
+                            saveed[0] = true;
+                            log.info("保存确认按钮点击成功...");
+                        } else {
+                            log.info("保存按钮点击失败...");
+                        }
+                        runOver[0] = true;
+                       /* WinDef.HWND yesButton = JNAUtils.findHandleByClassName("Button", 3, TimeUnit.SECONDS, "是(&Y)");
+                        if (yesButton != null) {
+                            if(JNAUtils.simulateClick(yesButton)){
+
+                            }
+
+                        }*/
+                    }
+                }
+            });
+        }
+
+        while (!(saveed[0] || runOver[0])) {
+            if (System.currentTimeMillis() - startTime > sceanTime * 1000) {
+                break;
+            }
+            sleep(50);
+        }
+
+        if (saveed[0] && !setError) {
+            System.out.println("保存完成,保存路径:" + savePath);
+            return true;
+        } else {
+            System.out.println("保存失败,保存路径:" + savePath);
+            return false;
+        }
+    }
+
+
+    /**
+     * 文件上传 指定绝对路径
+     *
+     * @param uploadFilePath
+     * @return
+     */
+    public boolean uploadFileByPath(String uploadFilePath) {
+        sleep(2000);
+        boolean saveed = false;
+        try {
+            uploadFileByPath(uploadFilePath, 25);
+            saveed = true;
+        } catch (Exception e) {
+            log.error("JNA 上传文件失败;" + e.getMessage());
+        }
+
+        if (!saveed) {
+            try {
+                sleep(3000);
+                setInputByPaste(uploadFilePath);
+                //保存文件
+                keyEnter();
+                saveed = true;
+                log.info("Robot 上传文件成功;");
+            } catch (Exception e) {
+                log.error("Robot 上传文件失败;" + e.getMessage());
+            }
+        }
+        return saveed;
+    }
+
+    /**
+     * 寻找并等待 另存为 浏览器窗体,指定文件保存路径,点击保存
+     *
+     * @param uploadFilePath 文件绝对路径
+     * @param sceanTime      扫描时间
+     * @return boolean
+     */
+    public boolean uploadFileByPath(String uploadFilePath, int sceanTime) {
+        boolean saveed = false;
+        WinDef.HWND handle = waitGetWinRootElement(null, "打开", sceanTime);
+        if (handle != null) {
+            WinDef.HWND edit = JNAUtils.findHandleByClassName("Edit", 10, TimeUnit.SECONDS, null);
+            if (edit != null) {
+                if (JNAUtils.simulateTextInput(edit, uploadFilePath)) {
+                }
+                sleep(1000);
+            }
+
+            WinDef.HWND finalHandle = handle;
+            ThreadPool.getSingleExecutorService().execute(new Runnable() {
+                @Override
+                public void run() {
+                    WinDef.HWND saveButton = JNAUtils.findHandleByClassName("Button", 10, TimeUnit.SECONDS, "打开(&O)");
+                    if (saveButton != null) {
+                        JNAUtils.simulateClick(saveButton);
+                    }
+                }
+            });
+
+            System.out.println("上传的文件路径为:" + uploadFilePath);
+            saveed = true;
+        }
+        return saveed;
+    }
+
+
+
+    /**--------------------------------------获取window桌面上任意句柄的方法------------------------------------------*/
+
+    /**
+     * 等待window元素出现,从桌面寻找,桌面上没有则返回false,适用于应用程序内部的桌面子类句柄中的最顶层(图层)句柄
+     *
+     * @param className 句柄类名
+     * @param title     标题
+     * @param sceanTime 扫描时间
+     * @return
+     */
+    public boolean waitFindWinElementInDesktop(String className, String title, int sceanTime) {
+        long stopTime = System.currentTimeMillis() + sceanTime * 1000;
+        while (System.currentTimeMillis() < stopTime) {
+            sleep(100);
+            if (JNAUtils.findHandleByClassName(null, className, title).size() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 获取window元素,从桌面寻找,桌面上没有则返回空,适用于应用程序内部,桌面最顶层句柄
+     *
+     * @param className 句柄类名
+     * @param title     标题
+     * @param sceanTime 扫描时间
+     * @return
+     */
+    public WinDef.HWND waitGetWinElementInDesktop(String className, String title, int sceanTime) {
+        long stopTime = System.currentTimeMillis() + sceanTime * 1000;
+        while (System.currentTimeMillis() < stopTime) {
+            sleep(100);
+            WinDef.HWND hwnd = getWinElementByClassAndTitle(className, title);
+            if (hwnd != null) {
+                return hwnd;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 等待window元素消失
+     *
+     * @param className 句柄类名
+     * @param title     标题
+     * @param sceanTime 扫描时间
+     * @return
+     */
+    public boolean waitWinElementDisappear(String className, String title, int sceanTime) {
+        sleep(1000);
+        long stopTime = System.currentTimeMillis() + sceanTime * 1000;
+        while (System.currentTimeMillis() < stopTime) {
+            sleep(500);
+            if (JNAUtils.findHandleByClassNameAndCaption(className, title) == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 根据句柄类名和标题获取句柄
+     *
+     * @param className 句柄的class类名
+     * @param title     句柄标题
+     * @return
+     */
+    public WinDef.HWND getWinElementByClassAndTitle(String className, String title) {
+        return JNAUtils.findHandleByClassNameAndCaption(className, title);
+    }
+
+    /**
+     * 根据顶层句柄类名和标题获取句柄集合
+     *
+     * @param className
+     * @param title
+     * @return
+     */
+    public List<WinDef.HWND> getWinElementsByClassAndTitle(String className, String title) {
+        return JNAUtils.findHandleByClassName(null, className, title);
+    }
+
+
+    /**--------------------------------------获取window桌面上任意句柄的方法------------------------------------------*/
+
+    /**----------------------------操作window顶层(非子类句柄,比如浏览器另存为窗体句柄)句柄的方法 开始-------------------------------*/
+
+    /**
+     * 等待window元素出现(获取元素的顶层元素),并返回(默认等待时间为10秒)
+     *
+     * @param className 句柄类名
+     * @param title     句柄标题
+     * @return
+     */
+    public WinDef.HWND waitGetWinRootElement(String className, String title) {
+        return waitGetWinRootElement(className, title, 10);
+    }
+
+
+    /**
+     * 等待window元素(获取元素的顶层元素)出现,并返回
+     *
+     * @param className 句柄类名
+     * @param title     句柄标题
+     * @param sceanTime 扫描时间
+     * @return
+     */
+    public WinDef.HWND waitGetWinRootElement(String className, String title, int sceanTime) {
+        long stopTime = System.currentTimeMillis() + sceanTime * 1000;
+        while (System.currentTimeMillis() < stopTime) {
+            sleep(500);
+            WinDef.HWND hwnd = getWinRootElementByClassNameAndTitle(className, title);
+            if (hwnd != null) {
+                return hwnd;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 等待window元素消失
+     *
+     * @param className 句柄类名
+     * @param title     标题
+     * @param sceanTime 扫描时间
+     * @return
+     */
+    public boolean waitWinRootElementDisappear(String className, String title, int sceanTime) {
+        sleep(1000);
+        long stopTime = System.currentTimeMillis() + sceanTime * 1000;
+        while (System.currentTimeMillis() < stopTime) {
+            sleep(500);
+            if (!findWinRootElementByClassNameAndTitle(className, title)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 等待10秒内window元素出现,(获取元素的顶层元素)
+     *
+     * @param className 句柄类名
+     * @param title     标题/其他条件
+     * @return
+     */
+    public boolean waitFindWinRootElement(String className, String title) {
+        return waitFindWinRootElement(className, title, 10);
+    }
+
+
+    /**
+     * 等待window元素出现(获取元素的顶层元素)
+     *
+     * @param className 句柄类名
+     * @param title     标题
+     * @param sceanTime 扫描时间
+     * @return
+     */
+    public boolean waitFindWinRootElement(String className, String title, int sceanTime) {
+        long stopTime = System.currentTimeMillis() + sceanTime * 1000;
+
+        while (System.currentTimeMillis() < stopTime) {
+            sleep(1000);
+            if (findWinRootElementByClassNameAndTitle(className, title)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 根据window句柄的类名和标题获取window句柄 (获取桌面的顶层元素)
+     *
+     * @param className window句柄类名
+     * @param title     win到我句柄标题
+     * @return 句柄对象
+     */
+    public WinDef.HWND getWinRootElementByClassNameAndTitle(String className, String title) {
+        WinDef.HWND handle = JNAUtils.findHandleByClassNameAndTitle(className, title);
+        return handle;
+    }
+
+    /**
+     * 根据window句柄的类名和标题获取window句柄
+     * 获取元素的顶层元素
+     *
+     * @param className window句柄类名
+     * @param title     win到我句柄标题
+     * @return 是否存在
+     */
+    public boolean findWinRootElementByClassNameAndTitle(String className, String title) {
+        WinDef.HWND handle = JNAUtils.findHandleByClassNameAndTitle(className, title);
+        if (handle == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**----------------------------操作window顶层句柄的方法 结束-------------------------------*/
+
+
+    /**
+     * 点击指定句柄下的window 按钮
+     *
+     * @param caption 筛选条件:title ,aaname,等
+     * @return 点击成功返回true 否则返回false
+     */
+    public boolean clickWinButton(String className, String caption) {
+        if (className != null) {
+            try {
+                WinDef.HWND okButton = JNAUtils.findHandleByClassName(className, 10, TimeUnit.SECONDS, caption);
+                if (okButton != null) {
+                    JNAUtils.simulateClick(okButton);
+                    return true;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 点击指定句柄下的window 按钮
+     *
+     * @param index 筛选条件:title ,aaname,等
+     * @return 点击成功返回true 否则返回false
+     */
+    public boolean clickWinButton(String className, int index) {
+        if (className != null) {
+            try {
+                WinDef.HWND okButton = JNAUtils.findHandleByClassName(className, index);
+                if (okButton != null) {
+                    JNAUtils.simulateClick(okButton);
+                    return true;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 点击指定句柄下的window 按钮
+     *
+     * @param handle  父级句柄
+     * @param caption 筛选条件:title ,aaname,等
+     * @return 点击成功返回true 否则返回false
+     */
+    public boolean clickWinButton(WinDef.HWND handle, String caption) {
+        return clickWinButton(handle, "Button", caption);
+    }
+
+    /**
+     * 点击指定句柄下的window 按钮
+     *
+     * @param handle  父级句柄
+     * @param caption 筛选条件:title ,aaname,等
+     * @return 点击成功返回true 否则返回false
+     */
+    public boolean clickWinButton(WinDef.HWND handle, String className, String caption) {
+        try {
+            WinDef.HWND okButton = JNAUtils.findHandleByClassName(handle, className, 10, TimeUnit.SECONDS, caption);
+            if (okButton != null) {
+                JNAUtils.simulateClick(okButton);
+                return true;
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * 设置指定句柄下window输入框的值
+     *
+     * @param handle 父级句柄
+     * @param text   输入文本
+     * @return
+     */
+    public boolean setWinEditValue(WinDef.HWND handle, String text) {
+        return setWinEditValue(handle, "Edit", null, text);
+    }
+
+    /**
+     * 设置指定句柄下window输入框的值,指定按钮的title
+     *
+     * @param handle  父级句柄
+     * @param caption 筛选条件 title等参数
+     * @param text    输入文本
+     * @return
+     */
+    public boolean setWinEditValue(WinDef.HWND handle, String className, String caption, String text) {
+        if (handle != null) {
+            try {
+                WinDef.HWND edit = JNAUtils.findHandleByClassName(handle, className, 10, TimeUnit.SECONDS, caption);
+                if (edit != null) {
+                    JNAUtils.simulateTextInput(edit, text);
+                    return true;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 设置指定句柄下window输入框的值
+     *
+     * @param handle  父级句柄
+     * @param caption 筛选条件 title等参数
+     * @return
+     */
+    public String getWinEditValue(WinDef.HWND handle, String caption) {
+        if (handle != null) {
+            try {
+                WinDef.HWND edit = JNAUtils.findHandleByClassName("Edit", 10, TimeUnit.SECONDS, caption);
+                if (edit != null) {
+                    String winHandleText = JNAUtils.getWinHandleText(edit);
+                    return winHandleText;
+                }
+            } catch (Exception e) {
+                return "";
+            }
+        }
+        return "";
+    }
+
+    /**
+     * 设置指定句柄下window输入框的值
+     *
+     * @param className 类名
+     * @param index     索引
+     * @return
+     */
+    public String getWinEditValue(String className, int index) {
+        try {
+            WinDef.HWND edit = JNAUtils.findHandleByClassName(className, index);
+            if (edit != null) {
+                String winHandleText = JNAUtils.getWinHandleText(edit);
+                return winHandleText;
+            }
+        } catch (Exception e) {
+            return "";
+        }
+        return "";
+    }
+
+    /**
+     * 设置指定句柄下window输入框的值
+     *
+     * @param handle 类名
+     * @return
+     */
+    public String getWinHWNDValue(WinDef.HWND handle) {
+        if (handle == null) {
+            return "";
+        }
+        try {
+            String text = JNAUtils.getWinHandleText(handle);
+            return text;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+
+    /**
+     * 获取指定句柄在桌面上的区域 左上角 x,y,width,hight 多用于截图
+     *
+     * @param handle
+     * @return
+     */
+    public Rectangle getWinHWNDRect(WinDef.HWND handle) {
+        WinDef.RECT rect = JNAUtils.getWinElementRect(handle);
+        Rectangle rectangle = new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+        return rectangle;
+    }
+
+
+    /**
+     * 根据类名关闭指定的句柄
+     *
+     * @param className
+     * @return
+     */
+    public boolean closeHandleByClassName(String className) {
+        return JNAUtils.closeHandleByClassName(className);
+    }
+
+    /**
+     * 关闭指定的句柄
+     *
+     * @param hwnd 句柄对象
+     * @return
+     */
+    public boolean closeHandle(WinDef.HWND hwnd) {
+        return JNAUtils.closeHandle(hwnd);
+    }
+
+
+    /**
+     * 获取句柄元素中心点坐标
+     *
+     * @param handle
+     * @return
+     */
+    public java.awt.Point clickWinHWNDByRobot(WinDef.HWND handle) {
+        Rectangle rect = getWinHWNDRect(handle);
+        java.awt.Point point = new java.awt.Point();
+        mouseMoveAndClick((int) (rect.getX() + (rect.getWidth() / 2)), (int) (rect.getY() + (rect.getHeight() / 2)));
+        return point;
     }
 }

@@ -1,4 +1,4 @@
-package com.cy.rpa.sikuli;
+package com.cy.rpa.config;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.cy.rpa.RPAConfig;
