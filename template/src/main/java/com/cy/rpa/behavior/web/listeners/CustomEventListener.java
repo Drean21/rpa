@@ -1,4 +1,4 @@
-package com.cy.web.listeners;
+package com.cy.rpa.behavior.web.listeners;
 
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.JavascriptExecutor;
