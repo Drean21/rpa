@@ -11,7 +11,7 @@ import java.net.ServerSocket;
  * @author Liang Zhaoyuan
  * @version 2024/02/08 14:20
  **/
-public class cmdUtil {
+public class CmdUtil {
     /**
      *  关闭占用指定端口的进程
      * @param port
