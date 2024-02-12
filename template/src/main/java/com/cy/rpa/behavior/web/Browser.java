@@ -3,7 +3,7 @@ package com.cy.rpa.behavior.web;
 import cn.hutool.core.io.FileUtil;
 import com.cy.rpa.RPAConfig;
 import com.cy.rpa.behavior.web.listeners.CustomEventListener;
-import com.cy.toolkit.cmdUtil;
+import com.cy.toolkit.CmdUtil;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -65,14 +65,14 @@ public class Browser {
             log.warn("路径下内置的谷歌浏览器驱动不存在！正在尝试使用WebDriverManager获取驱动...");
             WebDriverManager.chromedriver().setup();
         }
-        if (cmdUtil.isPortInUse(9889)) {
+        if (CmdUtil.isPortInUse(9889)) {
             isInitialized = false;
             try {
                 log.info("端口9889被占用，尝试使用已启动的Chrome浏览器...");
                 options.setExperimentalOption("debuggerAddress", debuggerAddress);
             } catch (Exception e) {
                 log.info("尝试使用已启动的Chrome浏览器失败，正在尝试关闭占用端口的Chrome进程...");
-                cmdUtil.closeProcessOnPort(port);
+                CmdUtil.closeProcessOnPort(port);
                 log.info("占用端口的Chrome进程已关闭，正在尝试重新启动Chrome浏览器...");
                 isInitialized = true;
             }

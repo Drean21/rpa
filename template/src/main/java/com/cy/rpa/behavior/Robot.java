@@ -627,7 +627,7 @@ public class Robot {
      * @param savePath
      * @return
      */
-    public  boolean specifyPathAndSaveFile(String savePath) {
+    public static boolean specifyPathAndSaveFile(String savePath) {
         //等待窗体出现
         boolean saveed = false;
         try {
@@ -663,7 +663,7 @@ public class Robot {
      * @param sceanTime
      * @return boolean
      */
-    public boolean specifyPathAndSaveFile(String savePath, int sceanTime) {
+    public static boolean specifyPathAndSaveFile(String savePath, int sceanTime) {
         long startTime = System.currentTimeMillis();
         //是否执行成功
         final boolean[] saveed = {false};
@@ -749,100 +749,6 @@ public class Robot {
         }
     }
 
-    /**
-     * 寻找并等待title为 "另存为" 的浏览器窗体句柄,指定文件保存路径,点击保存
-     *
-     * @param savePath
-     * @param sceanTime
-     * @return boolean
-     */
-    public boolean specifyPathAndSaveFileIE(String savePath, int sceanTime) {
-        long startTime = System.currentTimeMillis();
-        //是否执行成功
-        final boolean[] saveed = {false};
-        //是否设置输入框内容失败
-        boolean setError = false;
-        final boolean[] runOver = {false};
-        WinDef.HWND handle = waitGetWinRootElement("#32770", "保存文档", sceanTime);
-        if (handle != null) {
-            if (setWinEditValue(handle, savePath)) {
-                log.info("第一次文件路径写入成功...");
-            } else {
-                long countTime = System.currentTimeMillis();
-                WinDef.HWND edit = waitGetWinElementInDesktop("Edit", null, 5);
-                if (edit != null) {
-                    JNAUtils.simulateTextInput(edit, savePath);
-                }
-                while (true) {
-                    sleep(100);
-                    if (System.currentTimeMillis() - countTime > 5 * 1000) {
-                        setError = true;
-                        break;
-                    }
-                    String winHWNDValue = getWinHWNDValue(edit);
-                    if (savePath.equals(winHWNDValue)) {
-                        setError = false;
-                        log.info("文件路径写入成功:" + winHWNDValue);
-                        break;
-                    } else {
-                        log.info("文件路径写入失败:" + winHWNDValue);
-                    }
-                }
-            }
-            sleep(500);
-            WinDef.HWND finalHandle = handle;
-            ThreadPool.getSingleExecutorService().execute(new Runnable() {
-                @Override
-                public void run() {
-                    if (clickWinButton(finalHandle, "保存(&S)")) {
-                        saveed[0] = true;
-                        log.info("保存按钮点击成功...");
-                    } else {
-                        log.info("保存按钮点击失败...");
-                    }
-                    runOver[0] = true;
-                }
-            });
-            ThreadPool.getSingleExecutorService().execute(new Runnable() {
-                @Override
-                public void run() {
-                    WinDef.HWND handle = waitGetWinRootElement("#32770", "确认另存为", 3);
-                    if (handle != null) {
-                        if (clickWinButton(handle, "是(&Y)")) {
-                            saveed[0] = true;
-                            log.info("保存确认按钮点击成功...");
-                        } else {
-                            log.info("保存按钮点击失败...");
-                        }
-                        runOver[0] = true;
-                       /* WinDef.HWND yesButton = JNAUtils.findHandleByClassName("Button", 3, TimeUnit.SECONDS, "是(&Y)");
-                        if (yesButton != null) {
-                            if(JNAUtils.simulateClick(yesButton)){
-
-                            }
-
-                        }*/
-                    }
-                }
-            });
-        }
-
-        while (!(saveed[0] || runOver[0])) {
-            if (System.currentTimeMillis() - startTime > sceanTime * 1000) {
-                break;
-            }
-            sleep(50);
-        }
-
-        if (saveed[0] && !setError) {
-            System.out.println("保存完成,保存路径:" + savePath);
-            return true;
-        } else {
-            System.out.println("保存失败,保存路径:" + savePath);
-            return false;
-        }
-    }
-
 
     /**
      * 文件上传 指定绝对路径
@@ -850,7 +756,7 @@ public class Robot {
      * @param uploadFilePath
      * @return
      */
-    public boolean uploadFileByPath(String uploadFilePath) {
+    public static boolean uploadFileByPath(String uploadFilePath) {
         sleep(2000);
         boolean saveed = false;
         try {
@@ -882,7 +788,7 @@ public class Robot {
      * @param sceanTime      扫描时间
      * @return boolean
      */
-    public boolean uploadFileByPath(String uploadFilePath, int sceanTime) {
+    public static boolean uploadFileByPath(String uploadFilePath, int sceanTime) {
         boolean saveed = false;
         WinDef.HWND handle = waitGetWinRootElement(null, "打开", sceanTime);
         if (handle != null) {
@@ -937,7 +843,7 @@ public class Robot {
      * @param sceanTime 扫描时间
      * @return
      */
-    public WinDef.HWND waitGetWinElementInDesktop(String className, String title, int sceanTime) {
+    public static WinDef.HWND waitGetWinElementInDesktop(String className, String title, int sceanTime) {
         long stopTime = System.currentTimeMillis() + sceanTime * 1000;
         while (System.currentTimeMillis() < stopTime) {
             sleep(100);
@@ -976,7 +882,7 @@ public class Robot {
      * @param title     句柄标题
      * @return
      */
-    public WinDef.HWND getWinElementByClassAndTitle(String className, String title) {
+    public static WinDef.HWND getWinElementByClassAndTitle(String className, String title) {
         return JNAUtils.findHandleByClassNameAndCaption(className, title);
     }
 
@@ -1016,7 +922,7 @@ public class Robot {
      * @param sceanTime 扫描时间
      * @return
      */
-    public WinDef.HWND waitGetWinRootElement(String className, String title, int sceanTime) {
+    public static WinDef.HWND waitGetWinRootElement(String className, String title, int sceanTime) {
         long stopTime = System.currentTimeMillis() + sceanTime * 1000;
         while (System.currentTimeMillis() < stopTime) {
             sleep(500);
@@ -1089,7 +995,7 @@ public class Robot {
      * @param title     win到我句柄标题
      * @return 句柄对象
      */
-    public WinDef.HWND getWinRootElementByClassNameAndTitle(String className, String title) {
+    public static WinDef.HWND getWinRootElementByClassNameAndTitle(String className, String title) {
         WinDef.HWND handle = JNAUtils.findHandleByClassNameAndTitle(className, title);
         return handle;
     }
@@ -1163,7 +1069,7 @@ public class Robot {
      * @param caption 筛选条件:title ,aaname,等
      * @return 点击成功返回true 否则返回false
      */
-    public boolean clickWinButton(WinDef.HWND handle, String caption) {
+    public static boolean clickWinButton(WinDef.HWND handle, String caption) {
         return clickWinButton(handle, "Button", caption);
     }
 
@@ -1174,7 +1080,7 @@ public class Robot {
      * @param caption 筛选条件:title ,aaname,等
      * @return 点击成功返回true 否则返回false
      */
-    public boolean clickWinButton(WinDef.HWND handle, String className, String caption) {
+    public static boolean clickWinButton(WinDef.HWND handle, String className, String caption) {
         try {
             WinDef.HWND okButton = JNAUtils.findHandleByClassName(handle, className, 10, TimeUnit.SECONDS, caption);
             if (okButton != null) {
@@ -1194,7 +1100,7 @@ public class Robot {
      * @param text   输入文本
      * @return
      */
-    public boolean setWinEditValue(WinDef.HWND handle, String text) {
+    public static boolean setWinEditValue(WinDef.HWND handle, String text) {
         return setWinEditValue(handle, "Edit", null, text);
     }
 
@@ -1206,7 +1112,7 @@ public class Robot {
      * @param text    输入文本
      * @return
      */
-    public boolean setWinEditValue(WinDef.HWND handle, String className, String caption, String text) {
+    public static boolean setWinEditValue(WinDef.HWND handle, String className, String caption, String text) {
         if (handle != null) {
             try {
                 WinDef.HWND edit = JNAUtils.findHandleByClassName(handle, className, 10, TimeUnit.SECONDS, caption);
@@ -1269,7 +1175,7 @@ public class Robot {
      * @param handle 类名
      * @return
      */
-    public String getWinHWNDValue(WinDef.HWND handle) {
+    public static String getWinHWNDValue(WinDef.HWND handle) {
         if (handle == null) {
             return "";
         }
@@ -1311,7 +1217,7 @@ public class Robot {
      * @param hwnd 句柄对象
      * @return
      */
-    public boolean closeHandle(WinDef.HWND hwnd) {
+    public static boolean closeHandle(WinDef.HWND hwnd) {
         return JNAUtils.closeHandle(hwnd);
     }
 
