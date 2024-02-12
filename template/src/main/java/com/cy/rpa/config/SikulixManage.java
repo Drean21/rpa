@@ -5,6 +5,7 @@ import com.cy.rpa.RPAConfig;
 import org.sikuli.basics.Settings;
 import org.sikuli.script.Pattern;
 import org.sikuli.script.Screen;
+import org.sikuli.script.TextRecognizer;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -102,6 +103,15 @@ public class SikulixManage {
             patternUsCount.set(0);
         }
         return pattern;
+    }
+
+    /**
+     * 获取TextRecognizer对象
+     * @return
+     */
+    public static TextRecognizer getTextRecognizer(){
+        TextRecognizer start = TextRecognizer.start();
+        return start;
     }
 
 }
