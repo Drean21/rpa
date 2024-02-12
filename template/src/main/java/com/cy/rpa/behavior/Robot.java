@@ -895,8 +895,8 @@ public class Robot {
 
         if (!saveed) {
             try {
-                sleep(3000);
                 setInputByPaste(uploadFilePath);
+                sleep(200);
                 //保存文件
                 keyEnter();
                 saveed = true;
@@ -922,21 +922,17 @@ public class Robot {
             WinDef.HWND edit = JNAUtils.findHandleByClassName("Edit", 10, TimeUnit.SECONDS, null);
             if (edit != null) {
                 if (JNAUtils.simulateTextInput(edit, uploadFilePath)) {
+                    log.info("上传文件地址添加成功");
+                }else{
+                    log.info("上传文件地址添加失败");
                 }
                 sleep(1000);
             }
-
-            WinDef.HWND finalHandle = handle;
-            ThreadPool.getSingleExecutorService().execute(new Runnable() {
-                @Override
-                public void run() {
-                    WinDef.HWND saveButton = JNAUtils.findHandleByClassName("Button", 10, TimeUnit.SECONDS, "打开(&O)");
-                    if (saveButton != null) {
-                        JNAUtils.simulateClick(saveButton);
-                    }
-                }
-            });
-
+            //WinDef.HWND finalHandle = handle;
+            WinDef.HWND saveButton = JNAUtils.findHandleByClassName("Button", 10, TimeUnit.SECONDS, "打开(&O)");
+            if (saveButton != null) {
+                JNAUtils.simulateClick(saveButton);
+            }
             System.out.println("上传的文件路径为:" + uploadFilePath);
             saveed = true;
         }
