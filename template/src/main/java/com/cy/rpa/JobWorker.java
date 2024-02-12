@@ -1,12 +1,9 @@
 package com.cy.rpa;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.cy.assistant.AssistantWorker;
-import com.cy.office.OfficeWorker;
-import com.cy.os.OperatingSystemWorker;
+import com.cy.rpa.behavior.web.Browser;
 import com.cy.rpa.exception.BusinessException;
 import com.cy.rpa.exception.TimeOutException;
-import com.cy.rpa.behavior.web.Browser;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
@@ -20,14 +17,8 @@ import java.util.Objects;
 @Slf4j
 public abstract class JobWorker<T> {
 
-
-    // todo 组合方法将其他worker加进来达到多继承的类似效果
     // todo 任务会写和反馈方法封装
-    public Browser web = new Browser();
-    public OperatingSystemWorker os = new OperatingSystemWorker();
-    public OfficeWorker office = new OfficeWorker();
-
-    public AssistantWorker assistant = new AssistantWorker();
+    public Browser browser = new Browser();
 
     /**
      * 有参json执行方法
@@ -62,7 +53,7 @@ public abstract class JobWorker<T> {
         } finally {
             //web.closeBrowser();
             if (!"dev".equalsIgnoreCase(envType)) {
-                web.closeBrowser();
+                browser.closeBrowser();
             }
             // todo 检测cache文件夹，定期清理（找到最早的文件创建日期（修改日期）和当前时间比较，满足条件清理
         }

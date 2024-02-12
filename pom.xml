@@ -29,6 +29,7 @@
         <jsoup.version>1.15.3</jsoup.version>
         <easyexcel.version>3.1.3</easyexcel.version>
         <spotless-maven-plugin.version>2.22.1</spotless-maven-plugin.version>
+        <junit.version>4.13.2</junit.version>
     </properties>
 
     <dependencies>
@@ -112,6 +113,11 @@
                 <version>${redisson.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -134,9 +140,6 @@
                 <version>${spotless-maven-plugin.version}</version>
                 <configuration>
                     <java>
-                        <!--<eclipse>
-                            <file>${maven.multiModuleProjectDirectory}/format/short-link_spotless_formatter.xml</file>
-                        </eclipse>-->
                         <licenseHeader>
                             <!-- ${maven.multiModuleProjectDirectory} 爆红属于正常，并不影响编译或者运行，忽略就好 -->
                             <file>${maven.multiModuleProjectDirectory}/format/license-header</file>

@@ -3,14 +3,16 @@ package com.cy.rpa.behavior;
 import com.cy.rpa.RPAConfig;
 import com.cy.rpa.config.SikulixManage;
 import com.cy.rpa.jna.JNAUtils;
-import com.cy.toolkit.ScreenUtils;
 import com.cy.toolkit.ThreadPool;
 import com.sun.jna.platform.win32.WinDef;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.sikuli.basics.Settings;
-import org.sikuli.script.*;
+import org.sikuli.script.FindFailed;
+import org.sikuli.script.Location;
+import org.sikuli.script.Match;
+import org.sikuli.script.Screen;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -19,7 +21,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -559,40 +560,6 @@ public class Robot {
     }
 
 
-    /**
-     * 等待识别到特定文本的方法
-     * @param text 需要识别的文本
-     * @param waitTime 等待识别的最大时间（单位：秒）
-     * @return 如果在指定时间内识别到了指定文本，返回true，如果无法在指定时间内识别到文本或者发生其他异常，返回false
-     */
-    public static boolean waitFindText(String text, int waitTime) {
-        if (StringUtils.isEmpty(text)) {
-            return false;
-        }
-        TextRecognizer start = TextRecognizer.start();
-        for (int i = 0; i < waitTime / 1; i++) {
-            try {
-                ScreenUtils.getScreen(winPicPath);
-                String value = start.recognize(ImageIO.read(new File("win.png")));
-                System.out.println(value);
-                if (value.trim().contains(text.trim())) {
-                    return true;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (AWTException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    new File(winPicPath).delete();
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return false;
-    }
 
 
     /**
