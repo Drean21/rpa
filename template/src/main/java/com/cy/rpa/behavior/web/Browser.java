@@ -194,6 +194,44 @@ public class Browser {
 
 
     /**
+     * 截取整个浏览器页面的截图
+     *
+     * @return 截图的文件路径
+     */
+    public String captureFullPageScreenshot() {
+        try {
+            String path = RPAConfig.cachePath + File.separator + System.currentTimeMillis() + ".png";
+            // 截取整个浏览器页面的截图
+            File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            FileUtil.copyFile(screenshot, new File(path));
+            return path;
+        } catch (Exception e) {
+            log.error("截取整个浏览器页面的截图失败: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    /**
+     * 截取整个浏览器页面的截图并保存至指定路径
+     *
+     * @param path 指定的文件路径
+     * @return 截图的文件路径
+     */
+    public String captureFullPageScreenshot(String path) {
+        try {
+            // 截取整个浏览器页面的截图
+            File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            FileUtil.copyFile(screenshot, new File(path));
+            return path;
+        } catch (Exception e) {
+            log.error("截取整个浏览器页面的截图并保存至指定路径失败: {}", e.getMessage());
+            return "";
+        }
+    }
+
+
+
+    /**
      * 点击元素
      *
      * @param by
