@@ -1,7 +1,6 @@
 package com.cy.rpa.config;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.cy.rpa.RPAConfig;
 import org.sikuli.basics.Settings;
 import org.sikuli.script.Pattern;
 import org.sikuli.script.Screen;

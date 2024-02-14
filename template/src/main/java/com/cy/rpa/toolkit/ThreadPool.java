@@ -1,4 +1,4 @@
-package com.cy.toolkit;
+package com.cy.rpa.toolkit;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.cy.rpa;
+package com.cy.rpa.config;
 
 import com.cy.RpaApplication;
 
@@ -18,6 +18,34 @@ public class RPAConfig implements Serializable {
     public static final String envPath=getEnvPath();
 
     public static  final String cachePath = envPath + File.separator + "cache";
+    //cmd传参参数开头字符
+    public static final String cmd_param_start = "-D";
+    //cmd传参任务id参数名称
+    public static final String cmd_param_workIdKey = "DtaskId";
+    //cmd传参任务id参数名称
+    public static final String cmd_param_commitIdKey = "DcommitId";
+    //cmd传参交易号
+    public static final String cmd_param_transactionNo ="DtransactionNo";
+    //cmd传参参数开头字符
+    public static final String cmd_param_paramKey = "Dparams";
+    //数据文件地址
+    public static final String cmd_param_fileUrlKey = "DfileUrl";
+    //反馈地址
+    public static final String cmd_param_callbackUrlKey = "DcallbackUrl";
+    //    //文件上传地址
+//    public static final String cmd_param_fileUploadUrlKey = "DfileUploadUrl";
+    //RPA管理平台应用编号appCode
+    public static final String cmd_param_appCodeKey = "DappCode";
+
+
+
+
+
+
+
+
+
+
 
 
     /**
