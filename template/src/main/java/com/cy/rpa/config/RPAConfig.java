@@ -15,9 +15,18 @@ import java.nio.file.Paths;
  * @version 2024/02/02 15:14
  **/
 public class RPAConfig implements Serializable {
+    //环境目录
     public static final String envPath=getEnvPath();
 
+    //临时文件目录
     public static  final String cachePath = envPath + File.separator + "cache";
+    //日志文件目录
+    public static  final String logPath = envPath + File.separator + "log";
+
+    //下载文件保存路径
+    public static String downloadPath = envPath + File.separator + "file";
+
+
     //cmd传参参数开头字符
     public static final String cmd_param_start = "-D";
     //cmd传参任务id参数名称
