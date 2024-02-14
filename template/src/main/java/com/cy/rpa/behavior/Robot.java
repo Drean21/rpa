@@ -1,9 +1,9 @@
 package com.cy.rpa.behavior;
 
-import com.cy.rpa.RPAConfig;
+import com.cy.rpa.config.RPAConfig;
 import com.cy.rpa.config.SikulixManage;
 import com.cy.rpa.jna.JNAUtils;
-import com.cy.toolkit.ThreadPool;
+import com.cy.rpa.toolkit.ThreadPool;
 import com.sun.jna.platform.win32.WinDef;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
