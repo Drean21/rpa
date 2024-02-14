@@ -3,11 +3,14 @@ package com.cy;
 import cn.hutool.core.codec.Base64;
 import com.alibaba.fastjson2.JSONObject;
 import com.cy.rpa.JobWorker;
+import com.cy.rpa.config.RPAConfig;
 import com.cy.rpa.annotations.Job;
 import com.cy.rpa.annotations.Jobs;
 import com.cy.rpa.feedback.FeedbackModel;
 import com.cy.rpa.feedback.FeedbackUtils;
 import lombok.Data;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,18 +33,17 @@ public class RpaApplication {
     public static String defaultPort = "8080";
     /*任务id*/
     public static String taskId = "";
-
+    /*订单交易号*/
     public static String transactionNo;
 
+    /*rpa任务唯一标识*/
     public static String appCode;
 
-    /*集合或者增减员数据地址*/
+    /*下达任务书文件（通常为Excel）*/
     public static String dataUrl = "";
-    /*反馈接口*/
-    public static String callbackUrl = "";
-//    /*文件上传接口*/
-//    public static String fileUploadUrl = "";
 
+    /*任务反馈接口*/
+    public static String callbackUrl = "";
 
     public static void main(String[] args) {
         // 打开文件扩展名
@@ -83,14 +85,6 @@ public class RpaApplication {
         //shotdown();
     }
 
-    private static void run(String[] args) {
-//        TianjinWorker worker = new TianjinWorker();
-//        worker.worker();
-//        WuxiMedicalInsuranceVoucherDownloadJob worker=new WuxiMedicalInsuranceVoucherDownloadJob();
-//        worker.worker();
-
-
-    }
 
 
     /**
@@ -101,6 +95,47 @@ public class RpaApplication {
      */
     private static CMDParam getCMDParam(String[] args) {
         CMDParam param = new CMDParam();
+        if (ArrayUtils.isEmpty(args)) {
+            return null;
+        }
+
+        for (String arg : args) {
+            if (arg.startsWith(RPAConfig.cmd_param_start) && arg.contains(RPAConfig.cmd_param_workIdKey)) {
+                String paramData = getParamData(arg);
+                param.setWorkId(paramData);
+            }
+            if (arg.startsWith(RPAConfig.cmd_param_start) && arg.contains(RPAConfig.cmd_param_transactionNo)) {
+                String paramData = getParamData(arg);
+                transactionNo = paramData;
+            }
+
+            if (arg.startsWith(RPAConfig.cmd_param_start) && arg.contains(RPAConfig.cmd_param_paramKey)) {
+                String paramData = getParamData(arg);
+                param.setParam(paramData);
+            }
+
+            if (arg.startsWith(RPAConfig.cmd_param_start) && arg.contains(RPAConfig.cmd_param_fileUrlKey)) {
+                String paramData = getParamData(arg);
+                param.setFileUrl(paramData);
+            }
+
+            if (arg.startsWith(RPAConfig.cmd_param_start) && arg.contains(RPAConfig.cmd_param_callbackUrlKey)) {
+                String paramData = getParamData(arg);
+                callbackUrl = paramData;
+            }
+            if (arg.startsWith(RPAConfig.cmd_param_start) && arg.contains(RPAConfig.cmd_param_appCodeKey)) {
+                String paramData = getParamData(arg);
+                appCode = paramData;
+            }
+        }
+
+        if (StringUtils.isEmpty(param.getWorkId()) && StringUtils.isEmpty(param.getParam())) {
+            return null;
+        }
+
+        if (StringUtils.isEmpty(param.getWorkId()) || StringUtils.isEmpty(param.getParam())) {
+            throw new RuntimeException("参数异常,任务id与任务参数缺一不可");
+        }
         return param;
     }
 
@@ -125,7 +160,7 @@ public class RpaApplication {
         private String workId;
         //业务执行参数
         private String param;
-        //业务执行参数
+        //业务执行附件
         private String fileUrl;
     }
 
