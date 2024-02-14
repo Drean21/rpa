@@ -25,7 +25,7 @@ public class ExcelUtil {
      * @param cls 用作解析excel的Java类，这个类的字段会与excel的列进行映射
      * @return 返回解析后的数据列表，若读取失败或者解析异常，返回空列表
      */
-    public static List<T> readExcel(String fileName,Class cls) {
+    public static <T> List<T> readExcel(String fileName,Class<T> cls) {
         return readExcel(fileName,cls,0,1);
     }
     /**
@@ -36,7 +36,7 @@ public class ExcelUtil {
      * @param headRowNum 需要读取数据的起始行号
      * @return 返回解析后的数据列表，若读取失败或者解析异常，返回空列表
      */
-    public static List<T> readExcel(String fileName, Class cls, int sheetNo,int headRowNum) {
+    public static <T> List<T> readExcel(String fileName, Class<T> cls, int sheetNo,int headRowNum) {
         List<T> list = null;
         try {
             if(fileName.startsWith("http")){
